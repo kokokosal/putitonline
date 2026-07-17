@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sunset Rush — Ocean Racing</title>
+<style>
+  :root{
+    --hud-bg: rgba(10, 8, 24, 0.42);
+    --hud-line: rgba(255,255,255,0.14);
+    --amber: #ffb45e;
+    --danger: #ff4d3d;
+    --boost: #ffd54a;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ width:100%; height:100%; overflow:hidden; background:#1a0f2e; }
+  body{
+    font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+    -webkit-user-select:none; user-select:none;
+  }
+  #app{ position:fixed; inset:0; }
+  #app canvas.game{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  /* ---------- flash layers ---------- */
+  .layer{ position:absolute; inset:0; pointer-events:none; }
+  #fadeout{
+    background:#02030a; opacity:0; transition:opacity 700ms ease;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud{ position:absolute; inset:0; pointer-events:none; color:#fff; }
+  .chip{
+    background:var(--hud-bg); border:1px solid var(--hud-line);
+    border-radius:14px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
+  #speedo{
+    position:absolute; top:22px; left:50%; transform:translateX(-50%);
+    padding:8px 26px 10px; text-align:center; min-width:190px;
+  }
+  #speedVal{
+    font-size:52px; font-weight:800; font-style:italic; line-height:1;
+    letter-spacing:-1px; font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 22px rgba(255,170,80,0.75);
+  }
+  #speedo .unit{ display:block; font-size:12px; font-weight:600; letter-spacing:4px; opacity:0.75; margin-top:2px; }
+  #timer{
+    position:absolute; bottom:74px; left:24px;
+    padding:6px 16px 7px; text-align:left; min-width:118px;
+  }
+  #timerVal{
+    font-size:28px; font-weight:800; font-style:italic; line-height:1;
+    letter-spacing:-0.5px; font-variant-numeric: tabular-nums;
+  }
+  #timer .unit{ display:block; font-size:10px; font-weight:600; letter-spacing:3px; opacity:0.7; margin-top:2px; }
+  #bonusPop{
+    position:absolute; bottom:132px; left:26px;
+    font-size:15px; font-weight:800; letter-spacing:2px; color:#6dffa0;
+    text-shadow:0 0 12px rgba(90,255,140,0.85); opacity:0; pointer-events:none;
+    transition:opacity 220ms ease, transform 220ms ease;
+  }
+  #bonusPop.show{ opacity:1; transform:translateY(-12px); }
+  #bonusPop.bad{ color:#ff8a70; text-shadow:0 0 12px rgba(255,90,60,0.85); }
+  #minimapWrap{
+    position:absolute; top:22px; right:22px; padding:10px;
+  }
+  #minimap{ display:block; width:128px; height:128px; }
+
+  /* ---------- touch joystick ---------- */
+  #joy{
+    position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
+    width:240px; height:72px; border-radius:40px;
+    display:none; pointer-events:auto; touch-action:none;
+  }
+  body.touch #joy{ display:block; }
+  #joy::before, #joy::after{
+    content:"\25C0"; position:absolute; top:50%; transform:translateY(-50%);
+    left:18px; font-size:16px; color:rgba(255,255,255,0.45); pointer-events:none;
+  }
+  #joy::after{ content:"\25B6"; left:auto; right:18px; }
+  #joyKnob{
+    position:absolute; top:50%; left:50%; width:56px; height:56px; margin:-28px 0 0 -28px;
+    border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,180,94,0.85) 72%);
+    box-shadow: 0 0 18px rgba(255,180,94,0.55), 0 2px 8px rgba(0,0,0,0.4);
+  }
+  #popText{
+    position:absolute; top:32%; left:50%; transform:translateX(-50%) scale(0.6);
+    font-size:88px; font-weight:900; font-style:italic; letter-spacing:2px;
+    background: linear-gradient(180deg, #fff2a8, #ff6bd0);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    filter: drop-shadow(0 0 24px rgba(255,120,210,0.7));
+    opacity:0; pointer-events:none;
+  }
+  #popText.show{ animation: popPrompt 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+  @keyframes popPrompt{
+    0%{ opacity:0; transform:translateX(-50%) scale(0.6) rotate(-8deg); }
+    60%{ opacity:1; transform:translateX(-50%) scale(1.12) rotate(3deg); }
+    100%{ opacity:1; transform:translateX(-50%) scale(1) rotate(0deg); }
+  }
+
+  /* ---------- overlay (countdown / game over) ---------- */
+  #overlay{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; pointer-events:none; color:#fff;
+  }
+  #credit{
+    position:absolute; bottom:12px; right:16px;
+    font-size:10px; letter-spacing:1px; opacity:0.45; text-align:right;
+  }
+  #bignum{
+    font-size:170px; font-weight:900; font-style:italic; line-height:1;
+    text-shadow: 0 0 44px rgba(255,180,90,0.9), 0 6px 30px rgba(0,0,0,0.5);
+    opacity:0;
+  }
+  #bignum.pop{ animation: pop 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
+  @keyframes pop{
+    0%{ opacity:0; transform:scale(2.1); }
+    18%{ opacity:1; transform:scale(1); }
+    75%{ opacity:1; }
+    100%{ opacity:0; transform:scale(0.82); }
+  }
+  #gameover{ display:none; text-align:center; }
+  #gameover h1{
+    font-size:78px; font-weight:900; font-style:italic; letter-spacing:6px; color:#ff5040;
+    text-shadow:0 0 40px rgba(255,50,30,0.8), 0 6px 30px rgba(0,0,0,0.6);
+  }
+  #gameover h1.finish{ color:#6dffa0; text-shadow:0 0 40px rgba(90,255,140,0.8), 0 6px 30px rgba(0,0,0,0.6); }
+  #gameover p{ margin-top:14px; font-size:19px; font-weight:600; letter-spacing:2px; opacity:0.9; }
+  #gameover p.highscore{
+    font-size:24px; font-weight:900; font-style:italic; letter-spacing:6px; color:var(--amber); opacity:1;
+    text-shadow:0 0 20px rgba(255,180,80,0.85);
+  }
+  #gameover .sub{ margin-top:6px; font-size:14px; opacity:0.6; letter-spacing:1px; }
+
+  /* ---------- leaderboard (below the track map) ---------- */
+  #leaderboard{
+    position:absolute; top:196px; right:22px; width:148px;
+    padding:10px 12px 11px; text-align:center; pointer-events:auto;
+  }
+  #lbTitle{ font-size:9px; font-weight:700; letter-spacing:2px; opacity:0.7; margin-bottom:7px; }
+  #lbList{ list-style:none; display:flex; flex-direction:column; gap:4px; }
+  #lbList li{
+    display:flex; justify-content:space-between; gap:10px;
+    font-size:13px; font-weight:600; letter-spacing:0.5px;
+  }
+  #lbList .lbRank{ opacity:0.55; width:1.3em; text-align:left; }
+  #lbList .lbScore{ color:var(--amber); font-variant-numeric: tabular-nums; }
+  #lbList .lbEmpty{ opacity:0.5; justify-content:center; font-weight:500; font-size:11px; }
+  #clearScores{
+    margin-top:10px; padding:5px 12px; font: inherit; font-size:10px; font-weight:700;
+    letter-spacing:2px; color:rgba(255,255,255,0.75); cursor:pointer;
+    background:rgba(255,255,255,0.06); border:1px solid var(--hud-line); border-radius:8px;
+    transition:background 150ms, color 150ms;
+  }
+  #clearScores:hover{ background:rgba(255,77,61,0.18); color:#ff9d90; border-color:rgba(255,77,61,0.5); }
+
+  #mute{
+    position:absolute; bottom:34px; left:26px; padding:9px 13px; cursor:pointer;
+    pointer-events:auto; font-size:16px; line-height:1;
+  }
+  #err{
+    display:none; position:absolute; left:10px; bottom:10px; max-width:80%;
+    background:rgba(120,0,0,0.85); color:#fff; font:12px/1.5 monospace;
+    padding:8px 12px; border-radius:8px; z-index:99; white-space:pre-wrap;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div id="speedo" class="chip">
+      <span id="speedVal">0</span>
+      <span class="unit">KM/H</span>
+    </div>
+    <div id="timer" class="chip">
+      <span id="timerVal">0.0s</span>
+      <span class="unit">LAP TIME</span>
+    </div>
+    <div id="bonusPop"></div>
+    <div id="popText">POP!</div>
+    <div id="minimapWrap" class="chip"><canvas id="minimap" width="256" height="256"></canvas></div>
+    <div id="leaderboard" class="chip">
+      <div id="lbTitle">TOP 5 &mdash; FASTEST LAPS</div>
+      <ol id="lbList"></ol>
+      <button id="clearScores" type="button">CLEAR</button>
+    </div>
+    <div id="joy" class="chip"><div id="joyKnob"></div></div>
+    <div id="credit">Audi e-tron GT model by gbarzu &middot; CC-BY-4.0</div>
+    <div id="mute" class="chip" title="Toggle sound (M)">&#128266;</div>
+  </div>
+  <div id="overlay">
+    <div id="bignum"></div>
+    <div id="gameover">
+      <h1 id="goHeadline">GAME OVER</h1>
+      <p id="goStats"></p>
+      <p class="sub" id="goRestart"></p>
+    </div>
+  </div>
+  <div id="fadeout" class="layer"></div>
+  <div id="err"></div>
+</div>
+<script src="three.min.js"></script>
+<script src="pew-sound.js"></script>
+<script src="crashed-sound.js"></script>
+<script src="wee-sound.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="etron-model.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
