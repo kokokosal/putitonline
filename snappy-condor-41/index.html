@@ -1,0 +1,1128 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#e23a8f" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Emma's World" />
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<title>Emma's World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{ --sky1:#ffd6f2; --sky2:#c9b8ff; --sky3:#a7e0ff; --pink:#ff5fae; --pink-deep:#e23a8f; --yellow:#ffd23f; --ink:#41265e; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; }
+  body{ font-family:'Fredoka',system-ui,sans-serif; color:var(--ink);
+    background:linear-gradient(160deg,var(--sky1) 0%,var(--sky2) 55%,var(--sky3) 100%);
+    overflow:hidden; user-select:none; -webkit-user-select:none; }
+  #ambient{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .floaty{ position:absolute; opacity:.55; animation:drift linear infinite; will-change:transform; }
+  @keyframes drift{ from{ transform:translateY(110vh) rotate(0); } to{ transform:translateY(-15vh) rotate(360deg); } }
+  .wrap{ position:relative; z-index:1; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:24px 18px calc(24px + env(safe-area-inset-bottom)); max-width:560px; margin:0 auto; }
+  .logo{ font-weight:700; font-size:clamp(44px,15vw,76px); line-height:1; letter-spacing:-1px; color:#fff;
+    text-shadow:0 4px 0 var(--pink-deep), 0 8px 0 rgba(0,0,0,.12), 0 18px 26px rgba(91,40,120,.35); }
+  .logo .star{ display:inline-block; animation:twinkle 1.6s ease-in-out infinite; }
+  @keyframes twinkle{ 0%,100%{ transform:scale(1) rotate(0); } 50%{ transform:scale(1.25) rotate(18deg); } }
+  .tag{ margin-top:10px; font-size:18px; font-weight:500; color:var(--ink); opacity:.75; }
+  .giftlink{ display:block; text-decoration:none; }
+  .gift{ width:210px; height:185px; position:relative; margin:26px auto 8px; animation:bob 2.4s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0) rotate(-1.5deg);} 50%{ transform:translateY(-12px) rotate(1.5deg);} }
+  .gift .base{ position:absolute; bottom:0; left:25px; width:160px; height:120px; background:linear-gradient(160deg,var(--pink),var(--pink-deep));
+    border-radius:14px; box-shadow:inset 0 -10px 0 rgba(0,0,0,.12), 0 18px 26px rgba(91,40,120,.32); }
+  .gift .lid{ position:absolute; top:34px; left:15px; width:180px; height:50px; background:linear-gradient(160deg,#ff7bc0,var(--pink));
+    border-radius:14px; box-shadow:0 8px 14px rgba(91,40,120,.28); }
+  .gift .rv{ position:absolute; bottom:0; left:93px; width:24px; height:120px; background:var(--yellow); }
+  .gift .rh{ position:absolute; top:34px; left:93px; width:24px; height:50px; background:var(--yellow); }
+  .gift .bow{ position:absolute; top:4px; left:50%; transform:translateX(-50%); font-size:56px; filter:drop-shadow(0 4px 4px rgba(91,40,120,.3)); }
+  .play{ display:inline-flex; align-items:center; gap:12px; font-family:inherit; font-weight:700; font-size:clamp(28px,8vw,34px); color:#fff;
+    border:none; cursor:pointer; text-decoration:none; margin-top:18px; background:linear-gradient(160deg,var(--pink),var(--pink-deep));
+    padding:20px 60px; border-radius:999px; box-shadow:0 8px 0 #c2266f, 0 16px 26px rgba(91,40,120,.35); animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.05);} }
+  .play:active{ transform:translateY(5px); box-shadow:0 3px 0 #c2266f, 0 8px 14px rgba(91,40,120,.3); animation:none; }
+  .feats{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:30px; }
+  .feat{ background:rgba(255,255,255,.72); border-radius:16px; padding:11px 16px; font-weight:600; color:var(--ink);
+    box-shadow:0 4px 0 rgba(91,40,94,.12); font-size:15px; }
+  .foot{ margin-top:28px; font-size:14px; font-weight:500; color:var(--ink); opacity:.6; }
+  #gameFrame{ display:none; border:0; }
+  #gameFrame.on{ display:block; position:fixed; inset:0; width:100%; height:100%; z-index:100; }
+  #homeBtn{ display:none; }
+  #homeBtn.on{ display:flex; position:fixed; top:calc(8px + env(safe-area-inset-top)); left:8px; z-index:200;
+    align-items:center; justify-content:center; width:44px; height:44px; border:none; border-radius:50%;
+    background:rgba(255,255,255,.9); box-shadow:0 3px 10px rgba(91,40,94,.3); font-size:22px; cursor:pointer; }
+  @media (prefers-reduced-motion: reduce){ .floaty,.gift,.play,.logo .star{ animation:none !important; } }
+</style>
+
+<div id="ambient"></div>
+
+<div class="wrap">
+  <div class="logo">Emma's W<span class="star">⭐</span>rld</div>
+  <div class="tag">Open surprises, collect them all, and decorate your rooms!</div>
+  <a class="giftlink" href="#play" id="giftLink" aria-label="Play Emma's World">
+    <div class="gift" aria-hidden="true">
+      <div class="base"></div><div class="rv"></div><div class="lid"></div><div class="rh"></div><div class="bow">🎀</div>
+    </div>
+  </a>
+  <button class="play" id="playBtn">▶ PLAY!</button>
+  <div class="feats">
+    <div class="feat">🎁 Surprises</div>
+    <div class="feat">🏠 4 Rooms</div>
+    <div class="feat">🍔 Food</div>
+    <div class="feat">🌈 Legendaries</div>
+  </div>
+  <div class="foot">Made with 💖 for Emma, Colin, &amp; Scarlett</div>
+</div>
+
+<button id="homeBtn" title="Home" aria-label="Back to home">🏠</button>
+<iframe id="gameFrame" title="Emma's World game" srcdoc="&lt;meta charset=&quot;utf-8&quot; /&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no&quot; /&gt;
+&lt;title&gt;Emma&#x27;s World&lt;/title&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot; /&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin /&gt;
+&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&amp;display=swap&quot; rel=&quot;stylesheet&quot; /&gt;
+&lt;style&gt;
+  :root {
+    --sky1: #ffd6f2;
+    --sky2: #c9b8ff;
+    --sky3: #a7e0ff;
+    --pink: #ff5fae;
+    --pink-deep: #e23a8f;
+    --yellow: #ffd23f;
+    --blue: #5cc8ff;
+    --purple: #9b6bff;
+    --mint: #7af0c8;
+    --ink: #41265e;
+    --white: #ffffff;
+
+    --t-cute: #67c9ff;
+    --t-super: #b06bff;
+    --t-magic: #ff5fae;
+    --t-legend: #ffb02e;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: &#x27;Fredoka&#x27;, system-ui, sans-serif;
+    color: var(--ink);
+    background: linear-gradient(160deg, var(--sky1) 0%, var(--sky2) 55%, var(--sky3) 100%);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ambient floating sparkles */
+  #ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .floaty {
+    position: absolute; font-size: 22px; opacity: .55;
+    animation: drift linear infinite;
+    will-change: transform;
+  }
+  @keyframes drift {
+    from { transform: translateY(110vh) rotate(0deg); }
+    to   { transform: translateY(-15vh) rotate(360deg); }
+  }
+
+  #app {
+    position: relative; z-index: 1;
+    height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    padding: 18px 16px 22px; max-width: 520px; margin: 0 auto;
+  }
+
+  /* ---- header ---- */
+  header { text-align: center; width: 100%; }
+  .logo {
+    font-weight: 700; font-size: clamp(34px, 11vw, 56px);
+    line-height: 1; letter-spacing: -1px;
+    color: var(--white);
+    text-shadow: 0 3px 0 var(--pink-deep), 0 6px 0 rgba(0,0,0,.12), 0 14px 22px rgba(91,40,120,.35);
+  }
+  .logo .star { display: inline-block; animation: twinkle 1.6s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100%{ transform: scale(1) rotate(0); } 50%{ transform: scale(1.25) rotate(18deg); } }
+  .subtitle {
+    margin-top: 6px; font-size: 15px; font-weight: 500;
+    color: var(--ink); opacity: .7;
+  }
+
+  /* ---- stage ---- */
+  .stage {
+    flex: 1; width: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; position: relative;
+  }
+  .prompt {
+    font-size: 19px; font-weight: 600; margin-bottom: 14px;
+    color: var(--ink); height: 24px; text-align: center;
+    transition: opacity .3s;
+  }
+  .prompt .wob { display: inline-block; animation: wob 1.2s ease-in-out infinite; }
+  @keyframes wob { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-6px); } }
+
+  /* ---- the present ---- */
+  .present-wrap {
+    position: relative; width: 220px; height: 230px;
+    display: flex; align-items: flex-end; justify-content: center;
+    cursor: pointer;
+  }
+  .present {
+    position: relative; width: 180px; height: 160px;
+    animation: idle 2.4s ease-in-out infinite;
+    transform-origin: 50% 100%;
+  }
+  @keyframes idle { 0%,100%{ transform: translateY(0) rotate(-1deg);} 50%{ transform: translateY(-8px) rotate(1deg);} }
+
+  .present.shake { animation: shake .5s ease-in-out; }
+  @keyframes shake {
+    0%,100%{ transform: translateX(0) rotate(0);}
+    15%{ transform: translateX(-10px) rotate(-5deg);}
+    30%{ transform: translateX(10px) rotate(5deg);}
+    45%{ transform: translateX(-9px) rotate(-4deg);}
+    60%{ transform: translateX(9px) rotate(4deg);}
+    75%{ transform: translateX(-5px) rotate(-2deg);}
+  }
+  .present.opening { animation: pop-open .45s cubic-bezier(.3,1.6,.5,1) forwards; }
+  @keyframes pop-open { 0%{ transform: scale(1);} 40%{ transform: scale(1.12) translateY(-6px);} 100%{ transform: scale(.6); opacity: 0;} }
+
+  .box-base {
+    position: absolute; bottom: 0; left: 10px; width: 160px; height: 120px;
+    background: linear-gradient(160deg, var(--pink) 0%, var(--pink-deep) 100%);
+    border-radius: 12px;
+    box-shadow: inset 0 -10px 0 rgba(0,0,0,.12), 0 16px 24px rgba(91,40,120,.32);
+  }
+  .ribbon-v {
+    position: absolute; bottom: 0; left: 78px; width: 24px; height: 120px;
+    background: var(--yellow); box-shadow: inset 0 0 0 2px rgba(0,0,0,.05);
+  }
+  .lid {
+    position: absolute; top: 0; left: 0; width: 180px; height: 50px;
+    background: linear-gradient(160deg, #ff7bc0 0%, var(--pink) 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 14px rgba(91,40,120,.28);
+    transform-origin: 50% 100%;
+  }
+  .ribbon-h {
+    position: absolute; top: 0; left: 78px; width: 24px; height: 50px;
+    background: var(--yellow);
+  }
+  .bow {
+    position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+    font-size: 46px; filter: drop-shadow(0 4px 4px rgba(91,40,120,.3));
+  }
+  .opening .lid { animation: lid-fly .45s ease-in forwards; }
+  @keyframes lid-fly { to { transform: translateY(-120px) rotate(-30deg); opacity: 0; } }
+  .opening .bow { animation: bow-fly .5s ease-out forwards; }
+  @keyframes bow-fly { to { transform: translate(-50%, -180px) scale(1.4) rotate(40deg); opacity: 0; } }
+
+  /* burst light behind reveal */
+  .burst {
+    position: absolute; top: 46%; left: 50%; width: 40px; height: 40px;
+    transform: translate(-50%,-50%) scale(0); border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, var(--yellow) 40%, transparent 72%);
+    opacity: 0; pointer-events: none;
+  }
+  .burst.go { animation: burst .7s ease-out forwards; }
+  @keyframes burst {
+    0%{ transform: translate(-50%,-50%) scale(0); opacity: .9; }
+    100%{ transform: translate(-50%,-50%) scale(9); opacity: 0; }
+  }
+
+  /* ---- reveal card ---- */
+  .reveal {
+    position: absolute; inset: 0; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; pointer-events: none;
+  }
+  .reveal.show { display: flex; }
+  .reveal-emoji {
+    font-size: 120px; line-height: 1;
+    filter: drop-shadow(0 10px 16px rgba(91,40,120,.35));
+    animation: reveal-pop .6s cubic-bezier(.2,1.7,.4,1) both;
+  }
+  @keyframes reveal-pop {
+    0%{ transform: scale(0) rotate(-30deg); }
+    70%{ transform: scale(1.18) rotate(8deg); }
+    100%{ transform: scale(1) rotate(0); }
+  }
+  .reveal-emoji.bouncing { animation: reveal-pop .6s cubic-bezier(.2,1.7,.4,1) both, happy-bounce 1.1s ease-in-out .6s infinite; }
+  @keyframes happy-bounce { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-14px);} }
+
+  .reveal-tier {
+    margin-top: 10px; font-weight: 700; font-size: 20px; letter-spacing: .5px;
+    padding: 5px 16px; border-radius: 999px; color: #fff;
+    animation: tier-in .4s ease-out .35s both;
+  }
+  @keyframes tier-in { from{ transform: scale(.5); opacity: 0;} to{ transform: scale(1); opacity: 1;} }
+  .reveal-name {
+    margin-top: 12px; font-weight: 700; font-size: 30px; color: var(--ink);
+    animation: tier-in .4s ease-out .5s both;
+  }
+  .reveal-note {
+    margin-top: 4px; font-size: 15px; font-weight: 500; opacity: .7;
+    animation: tier-in .4s ease-out .62s both; min-height: 20px;
+  }
+
+  .stars { font-size: 22px; margin-top: 8px; animation: tier-in .4s ease-out .45s both; }
+
+  /* ---- buttons ---- */
+  .controls {
+    width: 100%; display: flex; flex-direction: column; gap: 12px; align-items: center;
+  }
+  .btn {
+    font-family: inherit; font-weight: 700; font-size: 21px; cursor: pointer;
+    border: none; border-radius: 999px; padding: 16px 38px; color: #fff;
+    background: linear-gradient(160deg, var(--pink) 0%, var(--pink-deep) 100%);
+    box-shadow: 0 6px 0 var(--pink-deep), 0 12px 18px rgba(91,40,120,.3);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-deep), 0 6px 10px rgba(91,40,120,.3); }
+  .btn.big { min-width: 240px; }
+  .btn.hidden { display: none; }
+
+  .toolbar { display: flex; gap: 10px; }
+  .chip {
+    font-family: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
+    border: none; border-radius: 999px; padding: 10px 18px; color: var(--ink);
+    background: rgba(255,255,255,.75);
+    box-shadow: 0 4px 0 rgba(91,40,120,.15), 0 6px 12px rgba(91,40,120,.14);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .chip:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(91,40,120,.15); }
+
+  /* ---- collection drawer ---- */
+  .drawer-bg {
+    position: fixed; inset: 0; background: rgba(65,38,94,.45);
+    backdrop-filter: blur(3px); z-index: 30; display: none;
+    align-items: flex-end; justify-content: center;
+  }
+  .drawer-bg.show { display: flex; animation: fade .25s ease; }
+  @keyframes fade { from{opacity:0;} to{opacity:1;} }
+  .drawer {
+    background: linear-gradient(180deg, #fff 0%, #fff6fc 100%);
+    width: 100%; max-width: 520px; max-height: 80vh; border-radius: 28px 28px 0 0;
+    padding: 18px 18px 26px; box-shadow: 0 -10px 30px rgba(91,40,94,.3);
+    animation: slide-up .3s cubic-bezier(.2,1,.3,1);
+    display: flex; flex-direction: column;
+  }
+  @keyframes slide-up { from{ transform: translateY(100%);} to{ transform: translateY(0);} }
+  .drawer h2 { margin: 4px 0 2px; text-align: center; font-size: 26px; color: var(--pink-deep); }
+  .drawer .count { text-align: center; font-size: 14px; opacity: .65; margin-bottom: 12px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    overflow-y: auto; padding: 4px;
+  }
+  .grid-head {
+    grid-column: 1 / -1; font-weight: 700; font-size: 16px;
+    color: var(--pink-deep); padding: 8px 4px 2px; text-align: left;
+  }
+  .grid-head:first-child { padding-top: 0; }
+  .cell {
+    aspect-ratio: 1; border-radius: 16px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 34px;
+    background: #f2ecfa; position: relative;
+  }
+  .cell.found { background: #fff; box-shadow: 0 3px 0 rgba(91,40,94,.08); }
+  .cell .locked { font-size: 30px; opacity: .35; }
+  .cell .badge {
+    position: absolute; top: 4px; right: 6px; font-size: 11px; font-weight: 700;
+    color: #fff; background: var(--pink); border-radius: 999px; padding: 1px 7px;
+  }
+  .cell .nm { font-size: 9px; font-weight: 600; opacity: .6; margin-top: 2px; }
+  .closeBtn { margin: 14px auto 0; }
+
+  .confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 20; overflow: hidden; }
+  .conf { position: absolute; width: 11px; height: 14px; border-radius: 2px; will-change: transform; }
+
+  /* ---- room / decorate screen ---- */
+  .room-screen {
+    position: fixed; inset: 0; z-index: 40; display: none;
+    flex-direction: column; background: linear-gradient(160deg, var(--sky1), var(--sky3));
+  }
+  .room-screen.show { display: flex; animation: fade .25s ease; }
+  .room-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; flex: 0 0 auto;
+  }
+  .room-title { font-weight: 700; font-size: 24px; color: var(--pink-deep); }
+
+  .room-tabs {
+    display: flex; gap: 8px; padding: 0 12px 10px; overflow-x: auto;
+    flex: 0 0 auto; -webkit-overflow-scrolling: touch;
+  }
+  .room-tab {
+    flex: 0 0 auto; font-family: inherit; font-weight: 600; font-size: 15px;
+    border: none; border-radius: 999px; padding: 9px 16px; cursor: pointer;
+    background: rgba(255,255,255,.6); color: var(--ink);
+    box-shadow: 0 3px 0 rgba(91,40,94,.12); transition: transform .08s;
+  }
+  .room-tab:active { transform: translateY(2px); }
+  .room-tab.active {
+    background: var(--pink); color: #fff;
+    box-shadow: 0 3px 0 var(--pink-deep);
+  }
+
+  .room {
+    position: relative; flex: 1 1 auto; margin: 0 12px; border-radius: 22px;
+    overflow: hidden; box-shadow: inset 0 0 0 4px #fff, 0 12px 26px rgba(91,40,94,.25);
+    touch-action: none;
+  }
+  .room-wall {
+    position: absolute; inset: 0 0 38% 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.0) 0 38px, rgba(255,255,255,.18) 38px 40px),
+      linear-gradient(180deg, #fff0f8 0%, #ffe1f1 100%);
+  }
+  .room-floor {
+    position: absolute; inset: 62% 0 0 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 46px, rgba(0,0,0,0) 46px 48px),
+      linear-gradient(180deg, #f4c98a 0%, #e0a866 100%);
+  }
+  /* per-room themes */
+  .room[data-theme=&quot;living&quot;]  .room-wall  { background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 38px, rgba(255,255,255,.16) 38px 40px),
+      linear-gradient(180deg, #eef0ff 0%, #dfe2ff 100%); }
+  .room[data-theme=&quot;living&quot;]  .room-floor { background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 46px, rgba(0,0,0,0) 46px 48px),
+      linear-gradient(180deg, #e9c79c 0%, #cf9f6a 100%); }
+  .room[data-theme=&quot;kitchen&quot;] .room-wall  { background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 38px, rgba(255,255,255,.18) 38px 40px),
+      linear-gradient(180deg, #fffbe0 0%, #fdeeb0 100%); }
+  .room[data-theme=&quot;kitchen&quot;] .room-floor { background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.06) 0 44px, transparent 44px 46px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 44px, transparent 44px 46px),
+      linear-gradient(180deg, #d7f0e6 0%, #b9e3d4 100%); }
+  .room[data-theme=&quot;bathroom&quot;] .room-wall { background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0) 0 40px, rgba(255,255,255,.22) 40px 42px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 40px, rgba(255,255,255,.22) 40px 42px),
+      linear-gradient(180deg, #e2f7ff 0%, #c4ecff 100%); }
+  .room[data-theme=&quot;bathroom&quot;] .room-floor { background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.05) 0 40px, transparent 40px 42px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 40px, transparent 40px 42px),
+      linear-gradient(180deg, #cdeaf5 0%, #a9d8ea 100%); }
+
+  .room-hint {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    text-align: center; font-size: 16px; font-weight: 500; color: var(--ink);
+    opacity: .6; line-height: 1.4; pointer-events: none; transition: opacity .3s;
+  }
+  .room-cheer {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    text-align: center; font-size: 18px; font-weight: 700; color: var(--pink-deep);
+    background: rgba(255,255,255,.85); padding: 8px 18px; border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(91,40,94,.2); display: none; white-space: nowrap;
+  }
+  .room-cheer.show { display: block; animation: tier-in .4s ease-out; }
+
+  .placed-layer { position: absolute; inset: 0; }
+  .placed {
+    position: absolute; font-size: 58px; line-height: 1; cursor: grab;
+    transform: translate(-50%, -50%); touch-action: none;
+    filter: drop-shadow(0 6px 5px rgba(91,40,94,.3));
+    transition: filter .15s;
+  }
+  .placed.selected { filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 8px var(--pink)); }
+  .placed.dragging { cursor: grabbing; }
+  .placed .ctrl {
+    position: absolute; width: 28px; height: 28px; border-radius: 50%;
+    font-size: 17px; color: #fff; display: none; line-height: 1;
+    align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25); border: 2px solid #fff;
+  }
+  .placed.selected .ctrl { display: flex; }
+  .placed .del   { top: -16px;    right: -16px; background: var(--pink); }
+  .placed .big   { bottom: -16px; right: -16px; background: var(--purple); }
+  .placed .small { bottom: -16px; left: -16px;  background: var(--blue); }
+
+  .palette-bar {
+    flex: 0 0 auto; padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.5);
+  }
+  .palette-label { font-size: 14px; font-weight: 600; opacity: .7; margin: 0 2px 8px; }
+  .palette {
+    display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pal-item {
+    flex: 0 0 auto; width: 58px; height: 58px; border-radius: 14px; border: none;
+    background: #fff; font-size: 30px; cursor: pointer;
+    box-shadow: 0 3px 0 rgba(91,40,94,.12); transition: transform .08s;
+  }
+  .pal-item:active { transform: scale(.9); }
+  .pal-empty { font-size: 14px; font-weight: 500; opacity: .6; padding: 18px 4px; }
+  .clearBtn { margin-top: 4px; }
+
+
+    .floaty, .present, .reveal-emoji.bouncing { animation: none !important; }
+  }
+&lt;/style&gt;
+
+&lt;div id=&quot;ambient&quot;&gt;&lt;/div&gt;
+
+&lt;div id=&quot;app&quot;&gt;
+  &lt;header&gt;
+    &lt;div class=&quot;logo&quot;&gt;Emma&#x27;s W&lt;span class=&quot;star&quot;&gt;⭐&lt;/span&gt;rld&lt;/div&gt;
+    &lt;div class=&quot;subtitle&quot;&gt;Open surprises &amp;amp; furnish your world!&lt;/div&gt;
+  &lt;/header&gt;
+
+  &lt;div class=&quot;stage&quot;&gt;
+    &lt;div class=&quot;prompt&quot; id=&quot;prompt&quot;&gt;&lt;span class=&quot;wob&quot;&gt;👇 Tap the present!&lt;/span&gt;&lt;/div&gt;
+
+    &lt;div class=&quot;present-wrap&quot; id=&quot;presentWrap&quot;&gt;
+      &lt;div class=&quot;burst&quot; id=&quot;burst&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;present&quot; id=&quot;present&quot;&gt;
+        &lt;div class=&quot;box-base&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;ribbon-v&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;lid&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;ribbon-h&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;bow&quot;&gt;🎀&lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class=&quot;reveal&quot; id=&quot;reveal&quot;&gt;
+        &lt;div class=&quot;reveal-emoji&quot; id=&quot;revealEmoji&quot;&gt;🪑&lt;/div&gt;
+        &lt;div class=&quot;stars&quot; id=&quot;revealStars&quot;&gt;⭐&lt;/div&gt;
+        &lt;div class=&quot;reveal-tier&quot; id=&quot;revealTier&quot;&gt;Cute!&lt;/div&gt;
+        &lt;div class=&quot;reveal-name&quot; id=&quot;revealName&quot;&gt;Wooden Chair&lt;/div&gt;
+        &lt;div class=&quot;reveal-note&quot; id=&quot;revealNote&quot;&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;controls&quot;&gt;
+    &lt;button class=&quot;btn big hidden&quot; id=&quot;againBtn&quot;&gt;Open another! 🎁&lt;/button&gt;
+    &lt;div class=&quot;toolbar&quot;&gt;
+      &lt;button class=&quot;chip&quot; id=&quot;roomBtn&quot;&gt;🏠 My Room&lt;/button&gt;
+      &lt;button class=&quot;chip&quot; id=&quot;collectionBtn&quot;&gt;📖 Collection&lt;/button&gt;
+      &lt;button class=&quot;chip&quot; id=&quot;muteBtn&quot;&gt;🔊 Sound&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;drawer-bg&quot; id=&quot;drawerBg&quot;&gt;
+  &lt;div class=&quot;drawer&quot;&gt;
+    &lt;h2&gt;📖 Emma&#x27;s Collection&lt;/h2&gt;
+    &lt;div class=&quot;count&quot; id=&quot;collCount&quot;&gt;0 of 0 found&lt;/div&gt;
+    &lt;div class=&quot;grid&quot; id=&quot;grid&quot;&gt;&lt;/div&gt;
+    &lt;button class=&quot;btn closeBtn&quot; id=&quot;closeDrawer&quot;&gt;Done!&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;room-screen&quot; id=&quot;roomScreen&quot;&gt;
+  &lt;div class=&quot;room-top&quot;&gt;
+    &lt;div class=&quot;room-title&quot; id=&quot;roomTitle&quot;&gt;🛏️ Bedroom&lt;/div&gt;
+    &lt;button class=&quot;chip&quot; id=&quot;roomClose&quot;&gt;✓ Done&lt;/button&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;room-tabs&quot; id=&quot;roomTabs&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;room&quot; id=&quot;room&quot; data-theme=&quot;bedroom&quot;&gt;
+    &lt;div class=&quot;room-wall&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;room-floor&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;placed-layer&quot; id=&quot;placedLayer&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;room-hint&quot; id=&quot;roomHint&quot;&gt;👆 Tap a piece below to add it.&lt;br&gt;Drag to move • tap it to resize ➕➖&lt;/div&gt;
+    &lt;div class=&quot;room-cheer&quot; id=&quot;roomCheer&quot;&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;palette-bar&quot;&gt;
+    &lt;div class=&quot;palette-label&quot; id=&quot;paletteLabel&quot;&gt;Tap to place:&lt;/div&gt;
+    &lt;div class=&quot;palette&quot; id=&quot;palette&quot;&gt;&lt;/div&gt;
+    &lt;button class=&quot;chip clearBtn&quot; id=&quot;clearRoom&quot;&gt;🧹 Clear room&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;confetti-layer&quot; id=&quot;confetti&quot;&gt;&lt;/div&gt;
+
+&lt;script&gt;
+/* ---------------- Data ---------------- */
+const TIERS = {
+  cute:   { name: &#x27;Cute!&#x27;,        color: &#x27;var(--t-cute)&#x27;,   stars: &#x27;⭐&#x27;,       weight: 50 },
+  super:  { name: &#x27;Super Cute!&#x27;,  color: &#x27;var(--t-super)&#x27;,  stars: &#x27;⭐⭐&#x27;,     weight: 30 },
+  magic:  { name: &#x27;Magic!&#x27;,       color: &#x27;var(--t-magic)&#x27;,  stars: &#x27;⭐⭐⭐&#x27;,   weight: 15 },
+  legend: { name: &#x27;LEGENDARY!&#x27;,   color: &#x27;var(--t-legend)&#x27;, stars: &#x27;🌈🌈🌈🌈&#x27;, weight: 5  },
+};
+
+const ITEMS = [
+  // everyday
+  { id:&#x27;chair&#x27;,  e:&#x27;🪑&#x27;, n:&#x27;Wooden Chair&#x27;,  t:&#x27;cute&#x27; },
+  { id:&#x27;door&#x27;,   e:&#x27;🚪&#x27;, n:&#x27;Front Door&#x27;,    t:&#x27;cute&#x27; },
+  { id:&#x27;window&#x27;, e:&#x27;🪟&#x27;, n:&#x27;Window&#x27;,        t:&#x27;cute&#x27; },
+  { id:&#x27;basket&#x27;, e:&#x27;🧺&#x27;, n:&#x27;Laundry Basket&#x27;,t:&#x27;cute&#x27; },
+  { id:&#x27;bucket&#x27;, e:&#x27;🪣&#x27;, n:&#x27;Bucket&#x27;,        t:&#x27;cute&#x27; },
+  { id:&#x27;broom&#x27;,  e:&#x27;🧹&#x27;, n:&#x27;Broom&#x27;,         t:&#x27;cute&#x27; },
+  { id:&#x27;toilet&#x27;, e:&#x27;🚽&#x27;, n:&#x27;Toilet&#x27;,        t:&#x27;cute&#x27; },
+  // nicer pieces
+  { id:&#x27;bed&#x27;,    e:&#x27;🛏️&#x27;, n:&#x27;Cozy Bed&#x27;,      t:&#x27;super&#x27; },
+  { id:&#x27;mirror&#x27;, e:&#x27;🪞&#x27;, n:&#x27;Mirror&#x27;,        t:&#x27;super&#x27; },
+  { id:&#x27;art&#x27;,    e:&#x27;🖼️&#x27;, n:&#x27;Framed Art&#x27;,    t:&#x27;super&#x27; },
+  { id:&#x27;plant&#x27;,  e:&#x27;🪴&#x27;, n:&#x27;Potted Plant&#x27;,  t:&#x27;super&#x27; },
+  { id:&#x27;lamp&#x27;,   e:&#x27;💡&#x27;, n:&#x27;Table Lamp&#x27;,    t:&#x27;super&#x27; },
+  { id:&#x27;table&#x27;,  n:&#x27;Table&#x27;, t:&#x27;super&#x27;, svg:&#x27;&lt;svg viewBox=&quot;0 0 100 100&quot; style=&quot;width:1.05em;height:1.05em;display:inline-block;vertical-align:middle;overflow:visible&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;&lt;rect x=&quot;8&quot; y=&quot;40&quot; width=&quot;84&quot; height=&quot;13&quot; rx=&quot;5&quot; fill=&quot;#cf924e&quot; stroke=&quot;#9c6a34&quot; stroke-width=&quot;3&quot;/&gt;&lt;rect x=&quot;14&quot; y=&quot;52&quot; width=&quot;72&quot; height=&quot;6&quot; fill=&quot;#b87a3e&quot;/&gt;&lt;rect x=&quot;18&quot; y=&quot;56&quot; width=&quot;9&quot; height=&quot;33&quot; rx=&quot;2&quot; fill=&quot;#bd7d40&quot; stroke=&quot;#9c6a34&quot; stroke-width=&quot;2.5&quot;/&gt;&lt;rect x=&quot;73&quot; y=&quot;56&quot; width=&quot;9&quot; height=&quot;33&quot; rx=&quot;2&quot; fill=&quot;#bd7d40&quot; stroke=&quot;#9c6a34&quot; stroke-width=&quot;2.5&quot;/&gt;&lt;/svg&gt;&#x27; },
+  { id:&#x27;shower&#x27;, e:&#x27;🚿&#x27;, n:&#x27;Shower&#x27;,        t:&#x27;super&#x27; },
+  { id:&#x27;sink&#x27;,   n:&#x27;Sink&#x27;, t:&#x27;super&#x27;, svg:&#x27;&lt;svg viewBox=&quot;0 0 100 100&quot; style=&quot;width:1.05em;height:1.05em;display:inline-block;vertical-align:middle;overflow:visible&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;&lt;path d=&quot;M50 42 V26 q0 -4 4 -4 h6&quot; fill=&quot;none&quot; stroke=&quot;#aeb6bf&quot; stroke-width=&quot;5&quot; stroke-linecap=&quot;round&quot;/&gt;&lt;path d=&quot;M59 26 v7&quot; stroke=&quot;#aeb6bf&quot; stroke-width=&quot;5&quot; stroke-linecap=&quot;round&quot;/&gt;&lt;rect x=&quot;57.5&quot; y=&quot;34&quot; width=&quot;3&quot; height=&quot;9&quot; rx=&quot;1.5&quot; fill=&quot;#7fd0f5&quot;/&gt;&lt;path d=&quot;M20 45 H80 L74 63 Q72 69 64 69 H36 Q28 69 26 63 Z&quot; fill=&quot;#eef6fb&quot; stroke=&quot;#9bb8c9&quot; stroke-width=&quot;3&quot;/&gt;&lt;ellipse cx=&quot;50&quot; cy=&quot;45&quot; rx=&quot;30&quot; ry=&quot;6.5&quot; fill=&quot;#ffffff&quot; stroke=&quot;#9bb8c9&quot; stroke-width=&quot;3&quot;/&gt;&lt;ellipse cx=&quot;50&quot; cy=&quot;45&quot; rx=&quot;21&quot; ry=&quot;4&quot; fill=&quot;#cfe6f2&quot;/&gt;&lt;path d=&quot;M44 69 H56 L54 88 H46 Z&quot; fill=&quot;#e6eef4&quot; stroke=&quot;#9bb8c9&quot; stroke-width=&quot;3&quot;/&gt;&lt;/svg&gt;&#x27; },
+  { id:&#x27;cart&#x27;,   e:&#x27;🛒&#x27;, n:&#x27;Shopping Cart&#x27;, t:&#x27;super&#x27; },
+  // fancy
+  { id:&#x27;sofa&#x27;,   e:&#x27;🛋️&#x27;, n:&#x27;Comfy Sofa&#x27;,    t:&#x27;magic&#x27; },
+  { id:&#x27;tv&#x27;,     e:&#x27;📺&#x27;, n:&#x27;Big Screen TV&#x27;, t:&#x27;magic&#x27; },
+  { id:&#x27;clock&#x27;,  e:&#x27;🕰️&#x27;, n:&#x27;Grandpa Clock&#x27;, t:&#x27;magic&#x27; },
+  { id:&#x27;bath&#x27;,   e:&#x27;🛁&#x27;, n:&#x27;Bubble Bathtub&#x27;,t:&#x27;magic&#x27; },
+  { id:&#x27;ladder&#x27;, e:&#x27;🪜&#x27;, n:&#x27;Tall Ladder&#x27;,   t:&#x27;magic&#x27; },
+  { id:&#x27;teddy&#x27;,  e:&#x27;🧸&#x27;, n:&#x27;Giant Teddy&#x27;,   t:&#x27;magic&#x27; },
+  // legendary
+  { id:&#x27;genie&#x27;,  e:&#x27;🪔&#x27;, n:&quot;Genie&#x27;s Lamp&quot;,     t:&#x27;legend&#x27; },
+  { id:&#x27;elevator&#x27;,e:&#x27;🛗&#x27;, n:&#x27;Golden Elevator&#x27;, t:&#x27;legend&#x27; },
+  { id:&#x27;candela&#x27;,e:&#x27;🕯️&#x27;, n:&#x27;Royal Candelabra&#x27;, t:&#x27;legend&#x27; },
+  { id:&#x27;castle&#x27;, e:&#x27;🏰&#x27;, n:&#x27;Dream Castle&#x27;,     t:&#x27;legend&#x27; },
+
+  // ---- FOOD ----
+  { id:&#x27;apple&#x27;,  e:&#x27;🍎&#x27;, n:&#x27;Apple&#x27;,       t:&#x27;cute&#x27;,   kind:&#x27;food&#x27; },
+  { id:&#x27;bread&#x27;,  e:&#x27;🍞&#x27;, n:&#x27;Bread&#x27;,       t:&#x27;cute&#x27;,   kind:&#x27;food&#x27; },
+  { id:&#x27;banana&#x27;, e:&#x27;🍌&#x27;, n:&#x27;Banana&#x27;,      t:&#x27;cute&#x27;,   kind:&#x27;food&#x27; },
+  { id:&#x27;cheese&#x27;, e:&#x27;🧀&#x27;, n:&#x27;Cheese&#x27;,      t:&#x27;cute&#x27;,   kind:&#x27;food&#x27; },
+  { id:&#x27;pizza&#x27;,  e:&#x27;🍕&#x27;, n:&#x27;Pizza&#x27;,       t:&#x27;super&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;burger&#x27;, e:&#x27;🍔&#x27;, n:&#x27;Burger&#x27;,      t:&#x27;super&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;taco&#x27;,   e:&#x27;🌮&#x27;, n:&#x27;Taco&#x27;,        t:&#x27;super&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;sushi&#x27;,  e:&#x27;🍣&#x27;, n:&#x27;Sushi&#x27;,       t:&#x27;super&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;icecream&#x27;,e:&#x27;🍦&#x27;, n:&#x27;Ice Cream&#x27;,  t:&#x27;magic&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;donut&#x27;,  e:&#x27;🍩&#x27;, n:&#x27;Donut&#x27;,       t:&#x27;magic&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;cupcake&#x27;,e:&#x27;🧁&#x27;, n:&#x27;Cupcake&#x27;,     t:&#x27;magic&#x27;,  kind:&#x27;food&#x27; },
+  { id:&#x27;cake&#x27;,   e:&#x27;🎂&#x27;, n:&#x27;Birthday Cake&#x27;,   t:&#x27;legend&#x27;, kind:&#x27;food&#x27; },
+  { id:&#x27;lollipop&#x27;,e:&#x27;🍭&#x27;, n:&#x27;Rainbow Lollipop&#x27;,t:&#x27;legend&#x27;, kind:&#x27;food&#x27; },
+];
+
+function kindOf(item){ return item.kind || &#x27;furniture&#x27;; }
+function itemById(id){ return ITEMS.find(i =&gt; i.id === id); }
+function glyph(item){ return item ? (item.svg || item.e || &#x27;❔&#x27;) : &#x27;❔&#x27;; }
+
+const NOTES = {
+  legend: [&#x27;SO RARE! 🎉&#x27;, &#x27;For the fanciest room!&#x27;, &#x27;Wow wow WOW!&#x27;],
+  magic:  [&#x27;So fancy!&#x27;, &#x27;Looks amazing!&#x27;, &#x27;Oooh shiny!&#x27;],
+  super:  [&#x27;So comfy!&#x27;, &#x27;Looks great!&#x27;, &#x27;Yay!&#x27;],
+  cute:   [&#x27;Nice find!&#x27;, &#x27;Perfect!&#x27;, &#x27;A new piece!&#x27;],
+};
+const FOOD_NOTES = {
+  legend: [&#x27;SO RARE! 🎉&#x27;, &#x27;A super yummy treat!&#x27;, &#x27;Wow wow WOW!&#x27;],
+  magic:  [&#x27;So sweet!&#x27;, &#x27;Delicious!&#x27;, &#x27;Yum yum yum!&#x27;],
+  super:  [&#x27;Tasty!&#x27;, &#x27;Yummy!&#x27;, &#x27;Munch munch!&#x27;],
+  cute:   [&#x27;Yum!&#x27;, &#x27;A snack!&#x27;, &#x27;Tasty!&#x27;],
+};
+
+/* ---------------- State + storage ---------------- */
+const ROOMS = [
+  { id:&#x27;bedroom&#x27;,  name:&#x27;Bedroom&#x27;,     emoji:&#x27;🛏️&#x27; },
+  { id:&#x27;living&#x27;,   name:&#x27;Living Room&#x27;, emoji:&#x27;🛋️&#x27; },
+  { id:&#x27;kitchen&#x27;,  name:&#x27;Kitchen&#x27;,     emoji:&#x27;🍽️&#x27; },
+  { id:&#x27;bathroom&#x27;, name:&#x27;Bathroom&#x27;,    emoji:&#x27;🛁&#x27; },
+];
+let found = {};       // id -&gt; count
+let rooms = { bedroom:[], living:[], kitchen:[], bathroom:[] }; // each: [{uid,id,x,y}]
+let currentRoom = &#x27;bedroom&#x27;;
+let placed = rooms[currentRoom];   // alias to current room&#x27;s array
+let soundOn = true;
+let busy = false;
+let firstOpenThisSession = true;  // the first present is always the Table
+
+/* storage works both inside Claude (window.storage) and on a normal website (localStorage) */
+const store = {
+  async get(key){
+    try {
+      if (window.storage &amp;&amp; window.storage.get){
+        const r = await window.storage.get(key);
+        return r &amp;&amp; r.value ? r.value : null;
+      }
+    } catch (e) {}
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  },
+  async set(key, val){
+    try {
+      if (window.storage &amp;&amp; window.storage.set){ await window.storage.set(key, val); return; }
+    } catch (e) {}
+    try { localStorage.setItem(key, val); } catch (e) {}
+  }
+};
+
+async function loadCollection() {
+  try {
+    const v = await store.get(&#x27;emma:collection&#x27;);
+    if (v) found = JSON.parse(v);
+  } catch (e) { found = {}; }
+}
+async function saveCollection() {
+  try { await store.set(&#x27;emma:collection&#x27;, JSON.stringify(found)); }
+  catch (e) { /* play in-memory if storage unavailable */ }
+}
+async function loadRooms() {
+  try {
+    const v = await store.get(&#x27;emma:rooms&#x27;);
+    if (v) {
+      const saved = JSON.parse(v);
+      ROOMS.forEach(rm =&gt; { rooms[rm.id] = saved[rm.id] || []; });
+      if (saved._current &amp;&amp; rooms[saved._current]) currentRoom = saved._current;
+    } else {
+      // migrate an older single-room layout into the bedroom
+      const legacy = await store.get(&#x27;emma:room&#x27;);
+      if (legacy) rooms.bedroom = JSON.parse(legacy);
+    }
+  } catch (e) { /* keep empty rooms */ }
+  placed = rooms[currentRoom];
+}
+async function saveRooms() {
+  try {
+    await store.set(&#x27;emma:rooms&#x27;, JSON.stringify({ ...rooms, _current: currentRoom }));
+  } catch (e) { /* in-memory fallback */ }
+}
+
+/* ---------------- Ambient sparkles ---------------- */
+(function ambient(){
+  const layer = document.getElementById(&#x27;ambient&#x27;);
+  const icons = [&#x27;⭐&#x27;,&#x27;✨&#x27;,&#x27;💖&#x27;,&#x27;🌈&#x27;,&#x27;🫧&#x27;,&#x27;🌟&#x27;];
+  for (let i=0;i&lt;14;i++){
+    const s = document.createElement(&#x27;div&#x27;);
+    s.className = &#x27;floaty&#x27;;
+    s.textContent = icons[i % icons.length];
+    s.style.left = Math.random()*100 + &#x27;vw&#x27;;
+    s.style.fontSize = (14 + Math.random()*20) + &#x27;px&#x27;;
+    s.style.animationDuration = (9 + Math.random()*10) + &#x27;s&#x27;;
+    s.style.animationDelay = (-Math.random()*18) + &#x27;s&#x27;;
+    layer.appendChild(s);
+  }
+})();
+
+/* ---------------- Sound (Web Audio, no files) ---------------- */
+let actx = null;
+function ac(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function beep(freq, t0, dur, type=&#x27;sine&#x27;, vol=0.18){
+  const c = ac(); if(!c || !soundOn) return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.value = freq;
+  o.connect(g); g.connect(c.destination);
+  const now = c.currentTime + t0;
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(vol, now + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  o.start(now); o.stop(now + dur + 0.02);
+}
+function sndShake(){ beep(220,0,0.08,&#x27;triangle&#x27;,0.12); beep(180,0.07,0.08,&#x27;triangle&#x27;,0.12); }
+function sndPop(){ beep(520,0,0.06,&#x27;square&#x27;,0.12); }
+function sndReveal(tier){
+  const scales = {
+    cute:   [523,659,784],
+    super:  [523,659,784,1047],
+    magic:  [659,784,988,1319],
+    legend: [523,659,784,1047,1319,1568],
+  };
+  const notes = scales[tier] || scales.cute;
+  notes.forEach((f,i)=&gt; beep(f, i*0.09, 0.5, &#x27;sine&#x27;, 0.16));
+  if (tier===&#x27;legend&#x27; || tier===&#x27;magic&#x27;) notes.forEach((f,i)=&gt; beep(f*2, i*0.09+0.04, 0.4,&#x27;triangle&#x27;,0.07));
+}
+
+/* ---------------- Pick a surprise ---------------- */
+function pickTier(){
+  const total = Object.values(TIERS).reduce((a,t)=&gt;a+t.weight,0);
+  let r = Math.random()*total;
+  for (const k in TIERS){ r -= TIERS[k].weight; if (r&lt;=0) return k; }
+  return &#x27;cute&#x27;;
+}
+function pickItem(){
+  const tier = pickTier();
+  const pool = ITEMS.filter(i=&gt;i.t===tier);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+/* ---------------- Confetti ---------------- */
+function confettiBurst(big){
+  const layer = document.getElementById(&#x27;confetti&#x27;);
+  const colors = [&#x27;#ff5fae&#x27;,&#x27;#ffd23f&#x27;,&#x27;#5cc8ff&#x27;,&#x27;#9b6bff&#x27;,&#x27;#7af0c8&#x27;,&#x27;#ff924c&#x27;];
+  const n = big ? 90 : 45;
+  for (let i=0;i&lt;n;i++){
+    const c = document.createElement(&#x27;div&#x27;);
+    c.className = &#x27;conf&#x27;;
+    c.style.background = colors[i % colors.length];
+    if (Math.random()&lt;0.3) c.style.borderRadius = &#x27;50%&#x27;;
+    const startX = 50 + (Math.random()*40-20);
+    c.style.left = startX + &#x27;vw&#x27;;
+    c.style.top = &#x27;38vh&#x27;;
+    layer.appendChild(c);
+    const dx = (Math.random()*2-1) * (big?60:42);
+    const dy = (Math.random()* (big?70:55)) + 30;
+    const rot = Math.random()*720-360;
+    const dur = 1100 + Math.random()*900;
+    c.animate([
+      { transform:&#x27;translate(0,0) rotate(0)&#x27;, opacity:1 },
+      { transform:`translate(${dx}vw, ${dy}vh) rotate(${rot}deg)`, opacity:0 }
+    ], { duration:dur, easing:&#x27;cubic-bezier(.2,.6,.4,1)&#x27;, fill:&#x27;forwards&#x27; });
+    setTimeout(()=&gt;c.remove(), dur+50);
+  }
+}
+
+/* ---------------- Open flow ---------------- */
+const present = document.getElementById(&#x27;present&#x27;);
+const presentWrap = document.getElementById(&#x27;presentWrap&#x27;);
+const prompt = document.getElementById(&#x27;prompt&#x27;);
+const burst = document.getElementById(&#x27;burst&#x27;);
+const reveal = document.getElementById(&#x27;reveal&#x27;);
+const revealEmoji = document.getElementById(&#x27;revealEmoji&#x27;);
+const revealTier = document.getElementById(&#x27;revealTier&#x27;);
+const revealName = document.getElementById(&#x27;revealName&#x27;);
+const revealNote = document.getElementById(&#x27;revealNote&#x27;);
+const revealStars = document.getElementById(&#x27;revealStars&#x27;);
+const againBtn = document.getElementById(&#x27;againBtn&#x27;);
+
+let shookOnce = false;
+
+function tapPresent(){
+  if (busy) return;
+  ac();
+  if (!shookOnce){
+    shookOnce = true;
+    present.classList.add(&#x27;shake&#x27;);
+    sndShake();
+    prompt.innerHTML = &#x27;&lt;span class=&quot;wob&quot;&gt;Tap again to open! ✨&lt;/span&gt;&#x27;;
+    setTimeout(()=&gt; present.classList.remove(&#x27;shake&#x27;), 520);
+    return;
+  }
+  openPresent();
+}
+
+function openPresent(){
+  busy = true;
+  shookOnce = false;
+  prompt.style.opacity = &#x27;0&#x27;;
+  sndPop();
+
+  present.classList.add(&#x27;opening&#x27;);
+  burst.classList.add(&#x27;go&#x27;);
+
+  let item;
+  if (firstOpenThisSession) {
+    item = itemById(&#x27;table&#x27;);     // first present is always the Table
+    firstOpenThisSession = false;
+  } else {
+    item = pickItem();
+  }
+  const tier = TIERS[item.t];
+
+  setTimeout(()=&gt;{
+    present.style.display = &#x27;none&#x27;;
+    reveal.classList.add(&#x27;show&#x27;);
+    revealEmoji.innerHTML = glyph(item);
+    revealEmoji.className = &#x27;reveal-emoji bouncing&#x27;;
+    revealStars.textContent = tier.stars;
+    revealTier.textContent = tier.name;
+    revealTier.style.background = tier.color;
+    revealName.textContent = item.n;
+    const notes = (kindOf(item)===&#x27;food&#x27; ? FOOD_NOTES : NOTES)[item.t];
+    const isNew = !found[item.id];
+    revealNote.textContent = isNew ? &#x27;✨ NEW! &#x27; + notes[0] : notes[Math.floor(Math.random()*notes.length)];
+
+    sndReveal(item.t);
+    confettiBurst(item.t===&#x27;legend&#x27; || item.t===&#x27;magic&#x27;);
+
+    // record
+    found[item.id] = (found[item.id]||0) + 1;
+    saveCollection();
+
+    againBtn.classList.remove(&#x27;hidden&#x27;);
+    busy = false;
+  }, 430);
+}
+
+function resetForNext(){
+  reveal.classList.remove(&#x27;show&#x27;);
+  present.style.display = &#x27;block&#x27;;
+  present.classList.remove(&#x27;opening&#x27;);
+  burst.classList.remove(&#x27;go&#x27;);
+  void burst.offsetWidth; // reflow
+  againBtn.classList.add(&#x27;hidden&#x27;);
+  prompt.style.opacity = &#x27;1&#x27;;
+  prompt.innerHTML = &#x27;&lt;span class=&quot;wob&quot;&gt;👇 Tap the present!&lt;/span&gt;&#x27;;
+}
+
+presentWrap.addEventListener(&#x27;click&#x27;, tapPresent);
+againBtn.addEventListener(&#x27;click&#x27;, resetForNext);
+
+/* ---------------- Collection drawer ---------------- */
+const drawerBg = document.getElementById(&#x27;drawerBg&#x27;);
+const grid = document.getElementById(&#x27;grid&#x27;);
+const collCount = document.getElementById(&#x27;collCount&#x27;);
+
+function tierShort(t){ return t===&#x27;legend&#x27;?&#x27;★★★★&#x27;: t===&#x27;magic&#x27;?&#x27;★★★&#x27;: t===&#x27;super&#x27;?&#x27;★★&#x27;:&#x27;★&#x27;; }
+
+function renderCollection(){
+  grid.innerHTML = &#x27;&#x27;;
+  let got = 0;
+
+  const sections = [
+    { kind:&#x27;furniture&#x27;, label:&#x27;🛋️ Furniture&#x27; },
+    { kind:&#x27;food&#x27;,      label:&#x27;🍔 Food&#x27; },
+  ];
+
+  sections.forEach(sec=&gt;{
+    const list = ITEMS.filter(i =&gt; kindOf(i) === sec.kind);
+    const owned = list.filter(i =&gt; found[i.id]).length;
+    got += owned;
+
+    const head = document.createElement(&#x27;div&#x27;);
+    head.className = &#x27;grid-head&#x27;;
+    head.textContent = `${sec.label}  (${owned}/${list.length})`;
+    grid.appendChild(head);
+
+    list.forEach(item=&gt;{
+      const count = found[item.id];
+      const cell = document.createElement(&#x27;div&#x27;);
+      cell.className = &#x27;cell&#x27; + (count ? &#x27; found&#x27; : &#x27;&#x27;);
+      if (count){
+        cell.innerHTML = `&lt;div&gt;${glyph(item)}&lt;/div&gt;&lt;div class=&quot;nm&quot;&gt;${item.n}&lt;/div&gt;` +
+          (count&gt;1 ? `&lt;div class=&quot;badge&quot;&gt;×${count}&lt;/div&gt;` : &#x27;&#x27;);
+      } else {
+        cell.innerHTML = `&lt;div class=&quot;locked&quot;&gt;❔&lt;/div&gt;&lt;div class=&quot;nm&quot;&gt;???&lt;/div&gt;`;
+      }
+      grid.appendChild(cell);
+    });
+  });
+
+  collCount.textContent = `${got} of ${ITEMS.length} found`;
+}
+
+document.getElementById(&#x27;collectionBtn&#x27;).addEventListener(&#x27;click&#x27;, ()=&gt;{
+  renderCollection();
+  drawerBg.classList.add(&#x27;show&#x27;);
+});
+document.getElementById(&#x27;closeDrawer&#x27;).addEventListener(&#x27;click&#x27;, ()=&gt; drawerBg.classList.remove(&#x27;show&#x27;));
+drawerBg.addEventListener(&#x27;click&#x27;, e=&gt;{ if(e.target===drawerBg) drawerBg.classList.remove(&#x27;show&#x27;); });
+
+/* ---------------- Mute ---------------- */
+document.getElementById(&#x27;muteBtn&#x27;).addEventListener(&#x27;click&#x27;, (e)=&gt;{
+  soundOn = !soundOn;
+  e.currentTarget.textContent = soundOn ? &#x27;🔊 Sound&#x27; : &#x27;🔇 Muted&#x27;;
+});
+
+/* ---------------- Room / decorate ---------------- */
+const roomScreen = document.getElementById(&#x27;roomScreen&#x27;);
+const room = document.getElementById(&#x27;room&#x27;);
+const placedLayer = document.getElementById(&#x27;placedLayer&#x27;);
+const palette = document.getElementById(&#x27;palette&#x27;);
+const roomHint = document.getElementById(&#x27;roomHint&#x27;);
+const roomCheer = document.getElementById(&#x27;roomCheer&#x27;);
+let selectedEl = null;
+let uidSeq = Date.now();
+
+function emojiOf(id){ const it = ITEMS.find(i=&gt;i.id===id); return it ? it.e : &#x27;❔&#x27;; }
+
+function renderPalette(){
+  palette.innerHTML = &#x27;&#x27;;
+  const order = { furniture: 0, food: 1 };
+  const owned = ITEMS.filter(i =&gt; found[i.id])
+                     .sort((a,b)=&gt; order[kindOf(a)] - order[kindOf(b)]);
+  if (owned.length === 0){
+    const empty = document.createElement(&#x27;div&#x27;);
+    empty.className = &#x27;pal-empty&#x27;;
+    empty.textContent = &#x27;Open some presents first to get furniture! 🎁&#x27;;
+    palette.appendChild(empty);
+    return;
+  }
+  owned.forEach(it=&gt;{
+    const b = document.createElement(&#x27;button&#x27;);
+    b.className = &#x27;pal-item&#x27;;
+    b.innerHTML = glyph(it);
+    b.title = it.n;
+    b.addEventListener(&#x27;click&#x27;, ()=&gt; addToRoom(it.id));
+    palette.appendChild(b);
+  });
+}
+
+function addToRoom(id){
+  // place near center with a little scatter so stacking is visible
+  const x = 50 + (Math.random()*30 - 15);
+  const y = 55 + (Math.random()*20 - 10);
+  const item = { uid: ++uidSeq, id, x, y, size: 1 };
+  placed.push(item);
+  renderPlaced();
+  saveRooms();
+  sndPop();
+  roomHint.style.opacity = &#x27;0&#x27;;
+}
+
+function renderPlaced(){
+  placedLayer.innerHTML = &#x27;&#x27;;
+  placed.forEach(p=&gt;{
+    const el = document.createElement(&#x27;div&#x27;);
+    el.className = &#x27;placed&#x27;;
+    el.style.left = p.x + &#x27;%&#x27;;
+    el.style.top = p.y + &#x27;%&#x27;;
+    el.style.fontSize = (58 * (p.size || 1)) + &#x27;px&#x27;;
+    el.dataset.uid = p.uid;
+    el.innerHTML = `&lt;span class=&quot;em&quot;&gt;${glyph(itemById(p.id))}&lt;/span&gt;` +
+                   `&lt;span class=&quot;small ctrl&quot;&gt;➖&lt;/span&gt;` +
+                   `&lt;span class=&quot;big ctrl&quot;&gt;➕&lt;/span&gt;` +
+                   `&lt;span class=&quot;del ctrl&quot;&gt;✕&lt;/span&gt;`;
+    attachDrag(el, p);
+    placedLayer.appendChild(el);
+  });
+  if (placed.length) roomHint.style.opacity = &#x27;0&#x27;;
+}
+
+function selectEl(el){
+  if (selectedEl) selectedEl.classList.remove(&#x27;selected&#x27;);
+  selectedEl = el;
+  if (el) el.classList.add(&#x27;selected&#x27;);
+}
+
+function attachDrag(el, p){
+  let dragging = false, moved = false, startX=0, startY=0;
+
+  el.addEventListener(&#x27;pointerdown&#x27;, (e)=&gt;{
+    if (e.target.classList.contains(&#x27;ctrl&#x27;)) return; // buttons handled separately
+    e.preventDefault();
+    dragging = true; moved = false;
+    startX = e.clientX; startY = e.clientY;
+    el.setPointerCapture(e.pointerId);
+    el.classList.add(&#x27;dragging&#x27;);
+    selectEl(el);
+  });
+
+  el.addEventListener(&#x27;pointermove&#x27;, (e)=&gt;{
+    if (!dragging) return;
+    if (Math.abs(e.clientX-startX) &gt; 3 || Math.abs(e.clientY-startY) &gt; 3) moved = true;
+    const rect = room.getBoundingClientRect();
+    let nx = ((e.clientX - rect.left) / rect.width) * 100;
+    let ny = ((e.clientY - rect.top) / rect.height) * 100;
+    nx = Math.max(4, Math.min(96, nx));
+    ny = Math.max(6, Math.min(94, ny));
+    p.x = nx; p.y = ny;
+    el.style.left = nx + &#x27;%&#x27;;
+    el.style.top = ny + &#x27;%&#x27;;
+  });
+
+  function endDrag(e){
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove(&#x27;dragging&#x27;);
+    if (moved) saveRooms();
+  }
+  el.addEventListener(&#x27;pointerup&#x27;, endDrag);
+  el.addEventListener(&#x27;pointercancel&#x27;, endDrag);
+
+  // resize + delete buttons
+  function resize(factor){
+    p.size = Math.max(0.55, Math.min(2.6, (p.size || 1) * factor));
+    el.style.fontSize = (58 * p.size) + &#x27;px&#x27;;
+    saveRooms();
+  }
+  el.querySelector(&#x27;.big&#x27;).addEventListener(&#x27;click&#x27;, (e)=&gt;{
+    e.stopPropagation(); selectEl(el); resize(1.18); sndPop();
+  });
+  el.querySelector(&#x27;.small&#x27;).addEventListener(&#x27;click&#x27;, (e)=&gt;{
+    e.stopPropagation(); selectEl(el); resize(1/1.18); sndPop();
+  });
+  el.querySelector(&#x27;.del&#x27;).addEventListener(&#x27;click&#x27;, (e)=&gt;{
+    e.stopPropagation();
+    rooms[currentRoom] = placed = placed.filter(item =&gt; item.uid !== p.uid);
+    renderPlaced();
+    saveRooms();
+  });
+}
+
+// tap empty floor to deselect
+room.addEventListener(&#x27;pointerdown&#x27;, (e)=&gt;{
+  if (e.target === room || e.target.classList.contains(&#x27;room-wall&#x27;) ||
+      e.target.classList.contains(&#x27;room-floor&#x27;) || e.target === placedLayer){
+    selectEl(null);
+  }
+});
+
+function updateCheer(){
+  const total = ITEMS.length;
+  const got = ITEMS.filter(i=&gt;found[i.id]).length;
+  if (got &gt;= total){
+    roomCheer.textContent = &#x27;🎉 You collected ALL of them! Build your dream room!&#x27;;
+    roomCheer.classList.add(&#x27;show&#x27;);
+  } else {
+    roomCheer.classList.remove(&#x27;show&#x27;);
+  }
+}
+
+function applyRoomChrome(){
+  const rm = ROOMS.find(r=&gt;r.id===currentRoom);
+  room.dataset.theme = currentRoom;
+  document.getElementById(&#x27;roomTitle&#x27;).textContent = rm.emoji + &#x27; &#x27; + rm.name;
+}
+
+function renderTabs(){
+  const tabs = document.getElementById(&#x27;roomTabs&#x27;);
+  tabs.innerHTML = &#x27;&#x27;;
+  ROOMS.forEach(rm=&gt;{
+    const b = document.createElement(&#x27;button&#x27;);
+    b.className = &#x27;room-tab&#x27; + (rm.id===currentRoom ? &#x27; active&#x27; : &#x27;&#x27;);
+    b.textContent = rm.emoji + &#x27; &#x27; + rm.name;
+    b.addEventListener(&#x27;click&#x27;, ()=&gt; switchRoom(rm.id));
+    tabs.appendChild(b);
+  });
+}
+
+function switchRoom(id){
+  if (id === currentRoom) return;
+  currentRoom = id;
+  placed = rooms[currentRoom];
+  selectEl(null);
+  applyRoomChrome();
+  renderTabs();
+  renderPlaced();
+  roomHint.style.opacity = placed.length ? &#x27;0&#x27; : &#x27;.6&#x27;;
+  sndPop();
+  saveRooms();
+}
+
+function openRoom(){
+  renderTabs();
+  applyRoomChrome();
+  renderPalette();
+  renderPlaced();
+  updateCheer();
+  roomHint.style.opacity = placed.length === 0 ? &#x27;.6&#x27; : &#x27;0&#x27;;
+  roomScreen.classList.add(&#x27;show&#x27;);
+}
+
+document.getElementById(&#x27;roomBtn&#x27;).addEventListener(&#x27;click&#x27;, openRoom);
+document.getElementById(&#x27;roomClose&#x27;).addEventListener(&#x27;click&#x27;, ()=&gt;{
+  selectEl(null);
+  roomScreen.classList.remove(&#x27;show&#x27;);
+});
+document.getElementById(&#x27;clearRoom&#x27;).addEventListener(&#x27;click&#x27;, ()=&gt;{
+  if (!placed.length) return;
+  rooms[currentRoom] = placed = [];
+  selectEl(null);
+  renderPlaced();
+  saveRooms();
+  roomHint.style.opacity = &#x27;.6&#x27;;
+});
+
+/* ---------------- Go ---------------- */
+loadCollection();
+loadRooms();
+&lt;/script&gt;
+"></iframe>
+
+<script>
+  var frame=document.getElementById('gameFrame');
+  var homeBtn=document.getElementById('homeBtn');
+  function showGame(e){ if(e) e.preventDefault(); frame.classList.add('on'); homeBtn.classList.add('on');
+    try{ if(location.hash!=='#play') history.pushState(null,'','#play'); }catch(err){} }
+  function showHome(){ frame.classList.remove('on'); homeBtn.classList.remove('on');
+    try{ if(location.hash==='#play') history.pushState(null,'',location.pathname); }catch(err){} }
+  document.getElementById('giftLink').addEventListener('click', showGame);
+  document.getElementById('playBtn').addEventListener('click', showGame);
+  homeBtn.addEventListener('click', showHome);
+  window.addEventListener('popstate', function(){ if(location.hash!=='#play') showHome(); });
+  if(location.hash==='#play'){ frame.classList.add('on'); homeBtn.classList.add('on'); }
+
+  (function ambient(){
+    var layer=document.getElementById('ambient');
+    var icons=['⭐','✨','💖','🌈','🫧','🌟','🎁'];
+    for(var i=0;i<16;i++){ var s=document.createElement('div'); s.className='floaty'; s.textContent=icons[i%icons.length];
+      s.style.left=Math.random()*100+'vw'; s.style.fontSize=(16+Math.random()*22)+'px';
+      s.style.animationDuration=(9+Math.random()*10)+'s'; s.style.animationDelay=(-Math.random()*18)+'s'; layer.appendChild(s); }
+  })();
+</script>
