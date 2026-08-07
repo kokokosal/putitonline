@@ -6,3 +6,4 @@ Zip upload → GitHub Pages hosting pipeline.
 - [misty-tiger-19](https://kokokosal.github.io/putitonline/misty-tiger-19/)
 - [plucky-quokka-161](https://kokokosal.github.io/putitonline/plucky-quokka-161/)
 - [shiny-jaguar-880](https://kokokosal.github.io/putitonline/shiny-jaguar-880/)
+- [sunny-lemur-531](https://kokokosal.github.io/putitonline/sunny-lemur-531/)
