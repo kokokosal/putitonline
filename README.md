@@ -9,3 +9,4 @@ Zip upload → GitHub Pages hosting pipeline.
 - [sunny-lemur-531](https://kokokosal.github.io/putitonline/sunny-lemur-531/)
 - [merry-iguana-305](https://kokokosal.github.io/putitonline/merry-iguana-305/)
 - [wild-hedgehog-984](https://kokokosal.github.io/putitonline/wild-hedgehog-984/)
+- [vivid-alpaca-234](https://kokokosal.github.io/putitonline/vivid-alpaca-234/)
