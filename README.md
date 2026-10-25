@@ -10,3 +10,4 @@ Zip upload → GitHub Pages hosting pipeline.
 - [merry-iguana-305](https://kokokosal.github.io/putitonline/merry-iguana-305/)
 - [wild-hedgehog-984](https://kokokosal.github.io/putitonline/wild-hedgehog-984/)
 - [vivid-alpaca-234](https://kokokosal.github.io/putitonline/vivid-alpaca-234/)
+- [vivid-panda-83](https://kokokosal.github.io/putitonline/vivid-panda-83/)
