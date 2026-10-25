@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Colin Reads</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+/* Layout: a toy table \2014  syllable shelf on top, a chunky word track below, word ideas as stickers. Single bright theme by choice. */
+:root{
+  color-scheme: light;
+  --sky:#dff1ff;
+  --sky-deep:#b9dcf7;
+  --ink:#1f2a44;
+  --ink-soft:#5b6a8a;
+  --a:#ff5a5f;          /* the vowel color; changes with the picker */
+  --a-s:#c7393e;
+  --track:#ffffff;
+  --sun:#ffcf3f;
+  --leaf:#3cc68a;
+  --display:"Baloo 2", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --letters:"Andika", "Comic Sans MS", system-ui, sans-serif; /* single-story a, made for early readers */
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden;max-width:100%;overscroll-behavior:none}
+/* the page never scrolls or bounces, so a touch is always a tap or a tile drag */
+body{height:100dvh;touch-action:none;-webkit-touch-callout:none}
+.ideas{touch-action:pan-x}
+.lock input{touch-action:manipulation}
+body{display:flex;flex-direction:column;margin:0}
+body{
+  background:var(--sky);
+  background-image:radial-gradient(circle at 12% 8%, #fff8 0 60px, transparent 61px),
+                   radial-gradient(circle at 88% 14%, #fff8 0 40px, transparent 41px);
+  color:var(--ink);
+  font-family:var(--letters);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:clamp(8px,2vh,18px);
+  user-select:none; -webkit-user-select:none;
+  touch-action:manipulation;
+  overflow-x:hidden;
+}
+.wrap{max-width:980px;width:100%;min-width:0;margin:0 auto;display:flex;flex-direction:column;gap:clamp(8px,1.8vh,20px);flex:1;min-height:0}
+.shelfArea{flex:1;min-height:0;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,6vw,46px);margin:0;line-height:1;letter-spacing:.5px}
+h1 .a{color:inherit}
+.vowels{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) minmax(52px,.6fr);gap:8px;
+  border-bottom:6px solid var(--a);transition:border-color .2s;align-items:end}
+.vowel{
+  font-family:var(--letters);font-weight:700;font-size:clamp(30px,6vw,44px);line-height:1;
+  height:clamp(58px,10vw,76px);border-radius:18px 18px 0 0;border:3px solid var(--vc);border-bottom:none;cursor:pointer;
+  background:#fff;color:var(--vc);min-width:0;
+  transition:background .15s, color .15s, margin .15s, height .15s;
+  margin-bottom:4px;
+}
+.vowel:hover{margin-bottom:0}
+.vowel[aria-pressed="true"]{background:var(--vc);color:#fff;margin-bottom:-6px;height:calc(clamp(58px,10vw,76px) + 14px)}
+.flip{
+  font-family:var(--display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1;
+  height:clamp(58px,10vw,76px);border-radius:18px 18px 0 0;border:3px solid var(--ink);border-bottom:none;cursor:pointer;
+  background:#fff;color:var(--ink);min-width:0;margin-bottom:4px;padding:0;display:flex;align-items:center;justify-content:center;
+  transition:background .15s, color .15s;
+}
+.flip[aria-pressed="true"]{background:var(--ink);color:#fff}
+.flip:disabled{opacity:.3;cursor:default}
+.flip:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.vowel:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.shelfHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.shelfHead .label{margin:0}
+.btn.shuf{font-size:17px;padding:8px 16px;flex:none}
+.label{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px}
+
+/* shelf */
+.shelf{position:relative;width:100%;flex:1;min-height:160px;--t:78px}
+.shelf .tile{position:absolute;width:var(--t);height:var(--t);font-size:calc(var(--t) * .48);border-radius:calc(var(--t) * .26);transition:left .45s cubic-bezier(.3,1.4,.5,1),top .45s cubic-bezier(.3,1.4,.5,1),rotate .45s,scale .2s}
+.shelf .tile:hover{scale:1.08}
+@media (prefers-reduced-motion:reduce){.shelf .tile{transition:none}}
+.tile{
+  --c:#7b61ff; --s:#5a42d6;
+  font-family:var(--letters);font-weight:700;font-size:38px;line-height:1;
+  height:78px;border-radius:20px;border:none;
+  background:var(--c);color:#fff;box-shadow:0 6px 0 var(--s);
+  display:flex;align-items:center;justify-content:center;gap:1px;
+  cursor:grab;touch-action:none;position:relative;
+  transition:transform .12s;
+}
+.tile .v{color:inherit}
+.shelf .tile .v{color:#fff;opacity:.4}
+.tile:focus-visible,.btn:focus-visible,.idea:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.tile.pop{animation:pop .35s}
+@keyframes pop{40%{transform:scale(1.18) rotate(-4deg)}}
+
+/* track */
+.trackBox{background:var(--sky-deep);border-radius:28px;padding:clamp(10px,1.6vh,16px) 16px;display:flex;flex-direction:column;gap:14px}
+.track{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr)) auto;gap:10px}
+.addSlot{
+  width:clamp(44px,8vw,64px);border-radius:22px;border:4px dashed #9fc4e6;background:transparent;
+  font-family:var(--display);font-weight:800;font-size:36px;color:#7aa6cf;cursor:pointer;
+}
+.addSlot:hover{background:#ffffff80}
+.addSlot:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.slot{
+  height:clamp(64px,12vh,112px);border-radius:22px;background:var(--track);
+  border:4px dashed #9fc4e6;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s;
+}
+.slot.over{border-color:var(--leaf);background:#eafff4}
+.slot.filled{border-style:solid;border-color:transparent;background:transparent}
+.slot .tile{width:100%;height:100%;font-size:clamp(30px,6vw,48px)}
+.slot .tile.hot{transform:translateY(-12px) scale(1.06)}
+.controls{display:grid;grid-template-columns:1fr minmax(64px,.25fr);gap:10px;align-items:stretch}
+#play.busy{animation:busy .8s ease-in-out infinite alternate}
+@keyframes busy{to{filter:brightness(1.12);transform:scale(.98)}}
+.btn.clear{background:#ff5a5f;color:#fff;box-shadow:0 5px 0 #c7393e;padding:0}
+.btn.clear:active{box-shadow:0 2px 0 #c7393e}
+.btn.clear svg{width:28px;height:28px}
+.btn{
+  font-family:var(--display);font-weight:800;font-size:22px;
+  border:none;border-radius:18px;padding:12px 10px;cursor:pointer;min-width:0;
+  background:var(--sun);color:var(--ink);box-shadow:0 5px 0 #d9a600;
+  display:flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1.1;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #d9a600}
+.btn.ghost{background:#fff;box-shadow:0 5px 0 #9fc4e6}
+.btn.ghost:active{box-shadow:0 2px 0 #9fc4e6}
+.word{
+  font-family:var(--letters);font-weight:700;font-size:clamp(28px,6vw,44px);
+  min-height:1.3em;letter-spacing:2px;text-align:center
+}
+.word .v{color:inherit}
+.word.real::after{content:"  \2605  real word!";font-family:var(--display);font-size:18px;letter-spacing:0;color:var(--leaf);vertical-align:middle}
+
+/* ideas */
+.ideas{display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;padding:6px 4px 10px;scrollbar-width:thin}
+.ideas .idea{flex:none}
+.idea{
+  font-family:var(--letters);font-weight:700;font-size:22px;
+  background:#fff;border:3px solid var(--ink);color:var(--ink);
+  border-radius:14px;padding:6px 14px;cursor:pointer;transform:rotate(var(--r,0deg));
+}
+.idea .v{color:inherit}
+.lock{position:fixed;inset:0;z-index:100;background:#1f2a44cc;display:flex;align-items:center;justify-content:center;padding:16px}
+.lockCard{background:#fff;border-radius:24px;padding:24px;width:min(360px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 0 #0e152655}
+.lockCard label{font-family:var(--display);font-weight:800;font-size:22px}
+.lockCard input{font:18px ui-monospace,Menlo,monospace;padding:12px 14px;border:3px solid #9fc4e6;border-radius:12px;width:100%}
+.lockCard input:focus{outline:none;border-color:var(--ink)}
+.lockHint{margin:0;font-size:13px;color:var(--ink-soft)}
+.lockErr{margin:0;min-height:1.2em;color:#d23b40;font-size:14px}
+.lockBtns{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+
+/* drag ghost + confetti */
+.dragGhost{position:fixed;z-index:50;pointer-events:none;width:78px;transform:translate(-50%,-50%) scale(1.15) rotate(-5deg);opacity:.95}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;height:100%}
+
+@media (max-width:520px){
+  .track{gap:6px}
+  .btn{font-size:17px;padding:12px 6px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tile,.tile.pop{animation:none;transition:none}
+}
+</style>
+
+<div class="wrap">
+  <div class="vowels" id="vowels" role="group" aria-label="Pick a vowel"></div>
+
+  <section class="shelfArea">
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <section class="trackBox">
+    <div class="word" id="word" aria-live="polite"></div>
+    <div class="track" id="track"></div>
+    <div class="controls">
+      <button class="btn" id="play">&#9654; Say it</button>
+      <button class="btn clear" id="clear" aria-label="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Try these</p>
+    <div class="ideas" id="ideas"></div>
+  </section>
+</div>
+<canvas id="fx"></canvas>
+<div class="lock" id="lock" hidden>
+  <form class="lockCard" id="lockForm">
+    <label for="lockPw">Password</label>
+    <input id="lockPw" type="password" autocomplete="current-password">
+    <p class="lockErr" id="lockErr"></p>
+    <div class="lockBtns">
+      <button class="btn" type="submit">Unlock</button>
+      <button class="btn ghost" type="button" id="lockSkip">Skip</button>
+    </div>
+  </form>
+</div>
+
+<script>
+/* ======== VOICE SETTINGS \u2014 paste your key here ======== */
+const PROVIDER = "openai";            // "elevenlabs" or "openai"
+const ELEVENLABS_API_KEY = "";            // paste ElevenLabs key
+const ELEVENLABS_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";  // "Sarah"; any voice ID from your ElevenLabs library
+const OPENAI_API_KEY_ENC = "u6fKCs86rNF7S_NhqzBq-joalmsRdOmRKRKjtvw-hKaxedTYSxq_MTss12V6_IZL5sZQvo9UpNdhaDe9xyRVM_uS3nLdK2SjdTb8eRAZlEPbtR9pJ8mWmg6pVvnQvKIovx6-lVRNAJjHrI5spL06cYpxB6qD8kJEhtEZ";            // scrambled key; unlocked by the password prompt
+const OPENAI_VOICE = "coral";             // coral, nova, shimmer, sage, alloy...
+/* ====================================================== */
+
+const CONS = "b c d f g h j k l m n p r s t v w y z".split(" ");
+const SHOW = { q:"qu" };                     // q always travels with u
+const SAYAS = { c:"k", q:"kw", x:"ks" };     // how the voice should pronounce these
+const COLORS = [
+  ["#7b61ff","#5a42d6"],["#ff8a3d","#d9661c"],["#20b8a6","#118878"],["#3d8bff","#1f66d1"],
+  ["#e94fa8","#bb2f82"],["#3cc68a","#24a06a"],["#9b5de5","#7638c0"],["#f2a922","#c5850c"],["#2fb4e0","#178cb3"]
+];
+/* each short vowel: the sound the voice says, its color, real words (cv-key -> how to say it), and ideas */
+const VOWELS = {
+  a:{ snd:"ah", as:"father", col:"#ff5a5f", sh:"#c7393e",
+      real:{mama:"mama",papa:"papa",lava:"lava",haha:"ha ha",baba:"baba",dada:"dada",nana:"nana",
+        lala:"la la",gaga:"gaga",java:"java",gala:"gala",nala:"Nala",tata:"ta ta",yaya:"yaya",rara:"rah rah",
+        papaya:"papaya",panama:"Panama",hahaha:"ha ha ha",lalala:"la la la",mamama:"mah mah mah"},
+      ideas:["mama","papa","lava","haha","nana","java","gala","papaya","panama","lalala"] },
+  e:{ snd:"eh", as:"bed", col:"#f08a00", sh:"#bb6a00",
+      real:{hehe:"heh heh",hehehe:"heh heh heh"},
+      ideas:["hehe","pepe","teke","lene","bedeke","hehehe"] },
+  i:{ snd:"ih", as:"big", col:"#22b06b", sh:"#178650",
+      real:{},
+      ideas:["kiki","lili","bibi","didi","mibiki","titiki"] },
+  o:{ snd:"aw", as:"hot", col:"#3b7cf0", sh:"#2459c2",
+      real:{},
+      ideas:["momo","toto","bobo","koko","dodo","pokoto"] },
+  u:{ snd:"uh", as:"bus", col:"#a64ff0", sh:"#7a2fc0",
+      real:{du:"duh",hu:"huh",huhu:"huh huh"},
+      ideas:["duh","huh","bubu","nunu","gugu","buku","dubuku"].map(w=>w.replace(/h$/,"")) },
+};
+/* words that mix vowels (compose them by switching vowels mid-word) */
+const MIXED = {potato:"potato",tomato:"tomato",domino:"domino",kimono:"kimono",safari:"safari",
+  salami:"salami",bikini:"bikini",karate:"karate",tamale:"tamale",banana:"banana",pajama:"pajama",
+  kiwi:"kiwi",tofu:"tofu",menu:"menu",pita:"pita",soda:"soda",tuba:"tuba",lego:"Lego",yoga:"yoga",zebra:"zebra",
+  sofa:"sofa",taco:"taco",sumo:"sumo",judo:"judo",zero:"zero"};
+delete MIXED.zebra;
+// the 30 words in the "Try these" row
+const WORD_LIST = ["mama","papa","lava","haha","banana","papaya","panama","pajama","potato","tomato",
+  "domino","kimono","safari","salami","bikini","karate","tamale","kiwi","tofu","menu",
+  "pita","soda","tuba","lego","yoga","sofa","taco","sumo","judo","zero"];
+const ALLREAL = Object.assign({}, MIXED, ...Object.values(VOWELS).map(o=>o.real));
+let V = "a";
+try{ const sv = localStorage.getItem("vowel"); if(VOWELS[sv]) V = sv; }catch(e){}
+const VO = () => VOWELS[V];
+const say1 = (c, v=V) => c + VOWELS[v].snd;
+const NOREV = new Set(["h","w","y"]);       // these don't work at the end (ah, aw, ay)
+let REV = false;                            // false: ba  true: ab
+try{ REV = localStorage.getItem("rev") === "1"; }catch(e){}
+let ONLY = false;                           // the * tab: consonant sounds alone
+try{ ONLY = localStorage.getItem("only") === "1"; }catch(e){}
+// how each consonant sounds on its own (phonics sound, not the letter name)
+const ALONE = { b:["buh","bat"], c:["kuh","cat"], d:["duh","dog"], f:["fff","fish"], g:["guh","goat"],
+  h:["hhh","hat"], j:["juh","jam"], k:["kuh","kite"], l:["lll","lamp"], m:["mmm","moon"], n:["nnn","nest"],
+  p:["puh","pig"], r:["rrr","red"], s:["sss","sun"], t:["tuh","top"], v:["vvv","van"], w:["wuh","web"],
+  y:["yuh","yes"], z:["zzz","zoo"] };
+const show = c => SHOW[c] || c;
+const label = it => !it.v ? show(it.c) : it.rev ? it.v + show(it.c) : show(it.c) + it.v;
+const itemKey = it => !it.v ? "c:" + it.c : it.rev ? "r:" + it.v + it.c : say1(it.c, it.v);
+const shelfItem = c => ONLY ? {c, v:null} : {c, v:V, rev:REV};
+const asRev = v => v === "a" ? "cat" : VOWELS[v].as;
+
+const shelf = document.getElementById("shelf");
+const trackEl = document.getElementById("track");
+const wordEl = document.getElementById("word");
+const slots = [null,null];      // starts with two; + adds more
+const MAX_SLOTS = 6;
+
+/* ---------- speech ---------- */
+let voice = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));
+  voice = vs.find(v=>/Samantha|Google US English|Jenny|Aria|Karen|Moira/i.test(v.name)) || vs[0] || null;
+}
+const hasSpeech = "speechSynthesis" in window;
+if(hasSpeech){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+
+/* real voice: each clip is fetched once from the API, then cached in this browser.
+   No key / offline -> falls back to the browser voice. */
+const CLIPS = {};
+// every clip key -> {text sent to the voice, phonics hint}
+const INFO = {};
+for(const [v,o] of Object.entries(VOWELS)){
+  const snd = o.snd;
+  INFO[snd] = { text: snd[0].toUpperCase()+snd.slice(1)+snd.slice(-1)+".", hint:`Say only the short "${v}" vowel sound, as in "${o.as}". Hold it a moment.` };
+  for(const c of CONS){
+    const k = c + snd, sp = (SAYAS[c] || c) + snd, shown = (SHOW[c] || c) + v;
+    INFO[k] = { text: sp[0].toUpperCase()+sp.slice(1)+".", hint:`Say the single phonics syllable "${shown}" (sounds like "${sp}") with the short "${v}" sound as in "${o.as}". Just that one syllable.` };
+  }
+  for(const w of Object.values(o.real)){
+    const k = w.toLowerCase();
+    INFO[k] = { text: k[0].toUpperCase()+k.slice(1)+"!", hint:`Say "${w}" cheerfully, short "${v}" sound as in "${o.as}".` };
+  }
+}
+for(const w of Object.values(MIXED)){
+  const k = w.toLowerCase();
+  INFO[k] = { text: k[0].toUpperCase()+k.slice(1)+"!", hint:`Say "${w}" cheerfully, the normal way.` };
+}
+for(const v of Object.keys(VOWELS)) for(const c of CONS){
+  if(NOREV.has(c)) continue;
+  const sp = v + (SAYAS[c] || c);
+  INFO["r:"+v+c] = { text: sp[0].toUpperCase()+sp.slice(1)+".",
+    hint:`Say the single phonics chunk "${v}${c}": the short "${v}" sound as in "${asRev(v)}", then the "${c}" sound. Just that one chunk.` };
+}
+for(const [c,[snd,ex]] of Object.entries(ALONE)){
+  INFO["c:"+c] = { text: snd[0].toUpperCase()+snd.slice(1)+".",
+    hint:`Say ONLY the phonics sound of the letter "${c}", the sound at the start of "${ex}". Not the letter name. Keep it short and clipped, with as little vowel as possible.` };
+}
+INFO["papaya"].hint = "Say papaya the normal way."; INFO["panama"].hint = "Say Panama the normal way.";
+
+async function fetchVoice(info){
+  let r;
+  if(PROVIDER === "openai"){
+    r = await fetch("https://api.openai.com/v1/audio/speech", {
+      method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+apiKey() },
+      body: JSON.stringify({ model:"gpt-4o-mini-tts", voice:OPENAI_VOICE, input:info.text, response_format:"mp3",
+        instructions:"A warm, cheerful parent teaching phonics to a young child. Clear and slightly slow. " + info.hint })
+    });
+  } else {
+    r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}?output_format=mp3_44100_64`, {
+      method:"POST", headers:{ "Content-Type":"application/json", "xi-api-key":apiKey() },
+      body: JSON.stringify({ text:info.text, model_id:"eleven_multilingual_v2",
+        voice_settings:{ stability:0.55, similarity_boost:0.8, style:0.2, speed:0.9 } })
+    });
+  }
+  if(!r.ok) throw new Error(r.status + " " + (await r.text()).slice(0,200));
+  const blob = await r.blob();
+  return await new Promise(res=>{ const fr = new FileReader(); fr.onload = ()=>res(fr.result); fr.readAsDataURL(blob); });
+}
+// the key in use: unscrambled OPENAI_API_KEY_ENC
+const fileKey = () => PROVIDER === "openai" ? "" : ELEVENLABS_API_KEY;
+let KEY_DECRYPTED = null;
+const apiKey = () => KEY_DECRYPTED || fileKey();
+const hasKey = () => !!apiKey();
+// saved clips are tied to the key that fetched them, so a wrong password never plays the real voice
+let KEY_TAG = "";
+const voiceId = () => (PROVIDER === "openai" ? "oa3:"+OPENAI_VOICE : "el2:"+ELEVENLABS_VOICE_ID) + ":" + KEY_TAG;
+async function keyTag(k){
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(k)));
+  return [...h.slice(0,6)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+// clear clips saved the old way (not tied to a key)
+try{ Object.keys(localStorage).filter(k=>/^clip:(oa2|el):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+const pending = {};
+async function getClip(k){
+  if(CLIPS[k]) return CLIPS[k];
+  if(!hasKey() || !INFO[k]) return null;
+  const store = "clip:" + voiceId() + ":" + k;
+  try{ const c = localStorage.getItem(store); if(c){ CLIPS[k] = c; return c; } }catch(e){}
+  if(!pending[k]) pending[k] = fetchVoice(INFO[k]).then(src=>{
+    CLIPS[k] = src; try{ localStorage.setItem(store, src); }catch(e){} return src;
+  }).catch(err=>{
+    console.warn("voice failed", k, err);
+    delete pending[k]; return null;
+  });
+  return pending[k];
+}
+// warm the cache for the current vowel so taps are instant
+let KEY_READY = false;
+function warm(){
+  if(!KEY_READY || !hasKey()) return;
+  const o = VO();
+  const tiles = CONS.filter(c=>ONLY || !(REV && NOREV.has(c))).map(c=>itemKey(shelfItem(c)));
+  const keys = [o.snd, ...tiles, ...Object.values(o.real).map(s=>s.toLowerCase())];
+  if(!warm.mixed){ warm.mixed = true; keys.push(...Object.values(MIXED).map(s=>s.toLowerCase())); }
+  (async()=>{ for(const k of keys){ await getClip(k); } })();
+}
+
+let curAudio = null, curSrc = null, gen = 0;
+/* Sound goes through Web Audio. Phones and Safari only allow sound right after a tap,
+   and a voice fetch can take a second or two, so the audio is unlocked on every tap
+   and then stays allowed even after the wait. */
+let AC = null, ttsUnlocked = false;
+const BUF = new Map();
+function audioCtx(){
+  if(!AC){ const C = window.AudioContext || window.webkitAudioContext; if(C) AC = new C(); }
+  return AC;
+}
+function unlockAudio(){
+  const c = audioCtx();
+  if(c && c.state !== "running") c.resume().catch(()=>{});
+  if(hasSpeech && !ttsUnlocked){ ttsUnlocked = true; const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }
+}
+["pointerdown","touchend","keydown"].forEach(ev=>addEventListener(ev, unlockAudio, {capture:true, passive:true}));
+async function decode(src){
+  if(BUF.has(src)) return BUF.get(src);
+  const ab = await (await fetch(src)).arrayBuffer();
+  const buf = await audioCtx().decodeAudioData(ab);
+  BUF.set(src, buf);
+  return buf;
+}
+async function playClip(src, rate=1){
+  const c = audioCtx(), my = gen;
+  if(!c) return playEl(src, rate);
+  try{
+    const buf = await decode(src);
+    if(my !== gen) return;
+    if(c.state !== "running") await c.resume().catch(()=>{});
+    return await new Promise(res=>{
+      const s = c.createBufferSource();
+      s.buffer = buf; s.playbackRate.value = rate; s.connect(c.destination);
+      curSrc = s;
+      const t = setTimeout(res, (buf.duration / rate) * 1000 + 400);
+      s.onended = ()=>{ clearTimeout(t); res(); };
+      s.start();
+    });
+  }catch(e){
+    console.warn("web audio failed, trying plain audio", e);
+    return playEl(src, rate);
+  }
+}
+function playEl(src, rate=1){
+  return new Promise(res=>{
+    const a = new Audio(src); a.playbackRate = rate; a.preservesPitch = true; curAudio = a;
+    const done = ()=>{ clearTimeout(t); res(); };
+    const t = setTimeout(done, 5000);
+    a.onended = a.onerror = done;
+    a.play().catch(done);
+  });
+}
+async function speak(text, rate=0.8){
+  const k = text.toLowerCase().trim(), my = gen;
+  if(INFO[k]){
+    const src = await getClip(k);
+    if(my !== gen) return;
+    if(src) return playClip(src);
+    return tts(INFO[k].text, rate);
+  }
+  return tts(text, rate);
+}
+// a made-up word: send the whole word to the voice so it comes out as one smooth word
+async function speakWord(items){
+  const word = items.map(label).join("");
+  const k = "w:" + word, my = gen;
+  if(!INFO[k]){
+    const syl = items.map(it=> !it.v ? `"${it.c}" (just the ${it.c} sound)` : `"${label(it)}" (short ${it.v} as in "${it.rev ? asRev(it.v) : VOWELS[it.v].as}")`).join(", then ");
+    INFO[k] = { text: word[0].toUpperCase()+word.slice(1)+"!",
+      hint:`"${word}" may be a real word or a made-up one. Read it as ONE smooth word, not separate syllables: ${syl}. Every vowel is short. Stress the first syllable.` };
+  }
+  const src = await getClip(k);
+  if(my !== gen) return;
+  if(src) return playClip(src);
+  return chain(items.map(itemKey));   // no key / API failed: string the syllables together
+}
+async function chain(keys, rate=0.85){
+  const my = gen;
+  const srcs = await Promise.all(keys.map(getClip));
+  if(my !== gen) return;
+  if(srcs.every(Boolean)){
+    for(const s of srcs){ if(my !== gen) return; await playClip(s, 1); }
+    return;
+  }
+  return tts(keys.join(""), rate);
+}
+function tts(text, rate){
+  return new Promise(res=>{
+    if(!hasSpeech) return res();
+    const u = new SpeechSynthesisUtterance(text);
+    if(voice) u.voice = voice;
+    u.rate = rate; u.pitch = 1.15;
+    u.onend = u.onerror = ()=>res();
+    setTimeout(()=>speechSynthesis.speak(u), 60);   // Chrome drops a speak() that comes right after cancel()
+    setTimeout(res, 2500);
+  });
+}
+function hush(){ gen++; if(curSrc){ try{ curSrc.stop(); }catch(e){} curSrc = null; } if(curAudio){ curAudio.pause(); curAudio = null; } if(hasSpeech) speechSynthesis.cancel(); }
+// Buttons fire the moment a finger touches them (not on release), which is far less
+// finicky on iPad. Keyboard Enter/Space still works through the normal click.
+// iPad Safari: block page panning/bouncing everywhere except the sideways word row
+document.addEventListener("touchmove", e=>{ if(!e.target.closest(".ideas")) e.preventDefault(); }, {passive:false});
+function onTap(el, fn){
+  el.addEventListener("pointerdown", e=>{ if(e.button > 0) return; e.preventDefault(); fn(e); });
+  el.addEventListener("click", e=>{ if(e.detail === 0) fn(e); });
+}
+
+/* ---------- vowel picker ---------- */
+const vowelsEl = document.getElementById("vowels");
+const titleEl = document.getElementById("title");
+Object.keys(VOWELS).forEach(v=>{
+  const b = document.createElement("button");
+  b.className = "vowel"; b.textContent = v; b.dataset.v = v;
+  b.style.setProperty("--vc", VOWELS[v].col); b.style.setProperty("--vs", VOWELS[v].sh);
+  b.setAttribute("aria-label", "Short " + v);
+  onTap(b, ()=>{ hush(); if(v !== V || ONLY) setVowel(v); speak(VOWELS[v].snd, 0.7); });
+  vowelsEl.appendChild(b);
+});
+// the * tab: consonants on their own
+const starBtn = document.createElement("button");
+starBtn.className = "vowel"; starBtn.innerHTML = "&#42;"; starBtn.dataset.v = "*";
+starBtn.style.setProperty("--vc", "#1f2a44"); starBtn.style.setProperty("--vs", "#0e1526");
+starBtn.setAttribute("aria-label", "Consonant sounds only");
+onTap(starBtn, ()=>{ hush(); if(!ONLY){ ONLY = true; applyMode(); } });
+vowelsEl.appendChild(starBtn);
+function setVowel(v){
+  V = v; ONLY = false;
+  try{ localStorage.setItem("vowel", v); }catch(e){}
+  applyMode();
+}
+function applyMode(){
+  const v = V;
+  try{ localStorage.setItem("only", ONLY ? "1" : "0"); }catch(e){}
+  const root = document.documentElement.style;
+  root.setProperty("--a", ONLY ? "#1f2a44" : VO().col); root.setProperty("--a-s", ONLY ? "#0e1526" : VO().sh);
+  [...vowelsEl.children].forEach(b=>{ if(b.dataset.v) b.setAttribute("aria-pressed", ONLY ? b.dataset.v === "*" : b.dataset.v === v); });
+  flipBtn.disabled = ONLY;
+  if(titleEl) titleEl.innerHTML = ["m","p","l"].map(c=>`${c}<span class="a">${v}</span>`).join(" &#183; ");
+  refreshShelf();
+  renderTrack(); renderIdeas(); lastCheer = ""; warm();
+}
+function refreshShelf(){
+  [...shelf.children].forEach((t,n)=>{
+    const it = shelfItem(t.dataset.c);
+    t.innerHTML = tileHTML(it.c, it.v, it.rev); t.setAttribute("aria-label", label(it));
+    t.hidden = !ONLY && REV && NOREV.has(it.c);
+    t.classList.remove("pop"); void t.offsetWidth; t.style.animationDelay = (n*15)+"ms"; t.classList.add("pop");
+  });
+  flipBtn.setAttribute("aria-pressed", REV);
+  layoutShelf();
+}
+// the ... toggle: flips every top tile between consonant+vowel and vowel+consonant
+const flipBtn = document.createElement("button");
+flipBtn.className = "flip"; flipBtn.innerHTML = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h11a5 5 0 0 1 0 10H6"/><path d="M10 12l-4 4 4 4"/></svg>'; flipBtn.setAttribute("aria-label", "Flip order: ba or ab");
+onTap(flipBtn, ()=>{
+  REV = !REV; try{ localStorage.setItem("rev", REV ? "1" : "0"); }catch(e){}
+  hush(); refreshShelf(); warm();
+});
+vowelsEl.appendChild(flipBtn);
+
+/* ---------- tiles ---------- */
+function tileHTML(c, v=V, rev=false){ return !v ? show(c) : rev ? `<span class="v">${v}</span>${show(c)}` : `${show(c)}<span class="v">${v}</span>`; }
+function makeTile(c, i, v=V, rev=false){
+  const b = document.createElement("button");
+  b.className = "tile"; b.dataset.c = c;
+  const [col, sh] = COLORS[i % COLORS.length];
+  b.style.setProperty("--c", col); b.style.setProperty("--s", sh);
+  b.innerHTML = tileHTML(c, v, rev);
+  b.setAttribute("aria-label", label({c, v, rev}));
+  return b;
+}
+const colorIndex = c => CONS.indexOf(c);
+
+CONS.forEach((c,i)=>{
+  const t = makeTile(c,i);
+  t.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); addToNext(shelfItem(c)); } });
+  attachDrag(t, ()=>shelfItem(c), null);
+  shelf.appendChild(t);
+});
+// scatter: a loose jittered grid so blocks look tossed on the table but never cover each other
+let order = [];
+function layoutShelf(){
+  // biggest tile size that fits every visible tile in the space left on screen
+  const vis = order.filter(k=>!k.hidden), n = vis.length;
+  const W = shelf.clientWidth, H = shelf.clientHeight;
+  let T = 44;
+  for(let t = 120; t >= 44; t -= 2){
+    const cols = Math.floor(W / (t*1.22));
+    if(cols >= 1 && Math.ceil(n/cols) * t*1.2 <= H){ T = t; break; }
+  }
+  const cols = Math.max(1, Math.floor(W / (T*1.22))), rows = Math.ceil(n/cols);
+  const cw = W / cols, ch = Math.max(T*1.2, Math.min(H / rows, T*1.6));
+  shelf.style.setProperty("--t", T + "px");
+  vis.forEach((k,i)=>{
+    const col = i % cols, row = Math.floor(i / cols);
+    k.style.left = (col*cw + (cw - T)/2 + (k._jx - .5) * (cw - T)*.7) + "px";
+    k.style.top  = (row*ch + (ch - T)/2 + (k._jy - .5) * (ch - T)*.7) + "px";
+    k.style.rotate = k._rot + "deg";
+  });
+  shelf.style.minHeight = (rows*ch > H + 1) ? rows*ch + "px" : "";
+}
+function shuffleShelf(){
+  order = [...shelf.children];  // stays in abc order; only the toss is random
+  order.forEach(k=>{ k._jx=Math.random(); k._jy=Math.random(); k._rot=(Math.random()*26-13).toFixed(1); });
+  layoutShelf();
+}
+shuffleShelf();
+new ResizeObserver(layoutShelf).observe(shelf);
+
+const addBtn = document.createElement("button");
+addBtn.className = "addSlot"; addBtn.textContent = "+"; addBtn.setAttribute("aria-label", "Add a slot");
+onTap(addBtn, ()=>{ if(slots.length < MAX_SLOTS){ slots.push(null); renderTrack(); } });
+const slotEls = () => [...trackEl.querySelectorAll(".slot")];
+function buildSlots(){
+  slotEls().forEach(s=>s.remove());
+  slots.forEach((_,i)=>{
+    const s = document.createElement("div");
+    s.className = "slot"; s.dataset.i = i;
+    trackEl.insertBefore(s, addBtn);
+  });
+  trackEl.style.setProperty("--n", slots.length);
+  addBtn.hidden = slots.length >= MAX_SLOTS;
+}
+trackEl.appendChild(addBtn);
+function setSlotCount(n){ slots.length = 0; for(let i=0;i<n;i++) slots.push(null); }
+
+const plainWord = () => current().map(label).join("");
+function renderTrack(){
+  if(slotEls().length !== slots.length) buildSlots();
+  slotEls().forEach((s,i)=>{
+    s.innerHTML = "";
+    const it = slots[i];
+    s.classList.toggle("filled", !!it);
+    if(it){
+      const t = makeTile(it.c, colorIndex(it.c), it.v, it.rev);
+      attachDrag(t, ()=>it, i);
+      s.appendChild(t);
+    }
+  });
+  wordEl.innerHTML = current().map(it=>tileHTML(it.c, it.v, it.rev)).join("");
+  wordEl.classList.toggle("real", !!ALLREAL[plainWord()]);
+}
+
+function current(){ return slots.filter(Boolean); }
+function addToNext(it){
+  const i = slots.indexOf(null);
+  if(i<0){ hush(); speak(itemKey(it)); return; }
+  slots[i] = it; renderTrack(); bounceSlot(i);
+  hush(); speak(itemKey(it)).then(maybeCelebrate);
+}
+function bounceSlot(i){
+  const t = slotEls()[i] && slotEls()[i].querySelector(".tile");
+  if(t){ t.classList.remove("pop"); void t.offsetWidth; t.classList.add("pop"); }
+}
+
+/* ---------- drag (pointer events, works with fingers) ---------- */
+function attachDrag(el, getC, fromSlot){
+  el.addEventListener("pointerdown", e=>{
+    if(e.button>0) return;
+    const it = getC(), c = it.c;
+    const sx = e.clientX, sy = e.clientY;
+    let ghost = null, over = null;
+    el.setPointerCapture(e.pointerId);
+
+    const move = ev=>{
+      const dx = ev.clientX-sx, dy = ev.clientY-sy;
+      if(!ghost && Math.hypot(dx,dy) > 8){
+        ghost = makeTile(c, colorIndex(c), it.v, it.rev); ghost.classList.add("dragGhost");
+        document.body.appendChild(ghost);
+        if(fromSlot!==null){ slots[fromSlot]=null; renderTrack(); }
+        else el.style.opacity = "0";   // lift it off the table while it's being dragged
+      }
+      if(ghost){
+        ghost.style.left = ev.clientX+"px"; ghost.style.top = ev.clientY+"px";
+        const s = slotAt(ev.clientX, ev.clientY);
+        if(s!==over){ over && over.classList.remove("over"); over = s; over && over.classList.add("over"); }
+      }
+    };
+    const up = ev=>{
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      if(!ghost){
+        el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+        hush(); speak(itemKey(it));
+        return;
+      }
+      ghost.remove(); over && over.classList.remove("over");
+      el.style.opacity = "";
+      const s = slotAt(ev.clientX, ev.clientY);
+      if(s){
+        const i = +s.dataset.i;
+        slots[i] = it; renderTrack(); bounceSlot(i);
+        hush(); speak(itemKey(it)).then(maybeCelebrate);
+      } else if(fromSlot===null){
+        hush(); speak(itemKey(it));
+      }
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+  });
+}
+function slotAt(x,y){
+  for(const s of slotEls()){
+    const r = s.getBoundingClientRect();
+    if(x>=r.left-10 && x<=r.right+10 && y>=r.top-14 && y<=r.bottom+14) return s;
+  }
+  return null;
+}
+
+/* ---------- play ---------- */
+let busy = false;
+function hot(i, on){
+  const t = slotEls()[i] && slotEls()[i].querySelector(".tile");
+  if(t) t.classList.toggle("hot", on);
+}
+async function sayWord(){
+  if(!current().length){ hush(); speak(VO().snd); return; }
+  hush();
+  const playBtn = document.getElementById("play"), my = gen;
+  playBtn.classList.add("busy"); playBtn.dataset.run = my;   // shows it's working while the voice loads
+  const idx = slots.map((c,i)=>c?i:-1).filter(i=>i>=0);
+  idx.forEach(i=>hot(i,true));
+  const real = ALLREAL[plainWord()];
+  if(real) await speak(real, 0.85);
+  else if(current().length === 1) await speak(itemKey(current()[0]), 0.85);
+  else await speakWord(current());
+  idx.forEach(i=>hot(i,false));
+  if(playBtn.dataset.run == my) playBtn.classList.remove("busy");
+  maybeCelebrate(true);
+}
+async function soundOut(){
+  if(busy || !current().length) return;
+  busy = true; hush();
+  for(let i=0;i<slots.length;i++){
+    if(!slots[i]) continue;
+    hot(i,true); await speak(itemKey(slots[i]), 0.7); hot(i,false);
+    await new Promise(r=>setTimeout(r,150));
+  }
+  if(current().length>1) await sayWord();
+  busy = false;
+}
+onTap(document.getElementById("play"), sayWord);
+onTap(document.getElementById("clear"), ()=>{ setSlotCount(2); renderTrack(); hush(); });
+
+/* ---------- ideas ---------- */
+const ideasEl = document.getElementById("ideas");
+function renderIdeas(){
+  ideasEl.innerHTML = "";
+  WORD_LIST.forEach((w,k)=>{
+    const b = document.createElement("button");
+    b.className = "idea"; b.style.setProperty("--r", ((k%3)-1)*2 + "deg");
+    const parts = w.match(/../g);
+    b.innerHTML = parts.map(p=>p[0]+`<span class="v">${p[1]}</span>`).join("");
+    b.onclick = ()=>{ setSlotCount(Math.max(2, parts.length)); parts.forEach((p,i)=>slots[i]={c:p[0], v:p[1]}); renderTrack(); soundOut(); };
+    ideasEl.appendChild(b);
+  });
+}
+
+/* ---------- confetti for real words ---------- */
+const fx = document.getElementById("fx"), ctx = fx.getContext("2d");
+let bits = [], lastCheer = "";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function maybeCelebrate(force){
+  const plain = plainWord();
+  if(!ALLREAL[plain]) return;
+  if(!force && plain===lastCheer) return;
+  lastCheer = plain;
+  if(reduce) return;
+  const r = trackEl.getBoundingClientRect();
+  for(let i=0;i<70;i++) bits.push({
+    x:r.left+r.width/2, y:r.top+r.height/2,
+    vx:(Math.random()-.5)*14, vy:-Math.random()*12-4,
+    s:6+Math.random()*8, c:COLORS[i%COLORS.length][0], a:Math.random()*6, life:90
+  });
+  if(bits.length===70) requestAnimationFrame(tick);
+}
+function tick(){
+  fx.width = innerWidth*devicePixelRatio; fx.height = innerHeight*devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  bits.forEach(b=>{ b.x+=b.vx; b.y+=b.vy; b.vy+=.45; b.a+=.2; b.life--;
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.a); ctx.fillStyle=b.c; ctx.fillRect(-b.s/2,-b.s/4,b.s,b.s/2); ctx.restore(); });
+  bits = bits.filter(b=>b.life>0);
+  if(bits.length) requestAnimationFrame(tick); else ctx.clearRect(0,0,fx.width,fx.height);
+}
+
+if(ONLY) applyMode(); else setVowel(V);
+
+/* ---------- scramble / unscramble with a password ----------
+   Each character is shifted inside a 64-letter alphabet by a keystream made from the password.
+   Any password gives back a key-shaped string; only the right one gives the real key. */
+const ALPH = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+async function keystream(pw, n){
+  const out = [];
+  for(let i = 0; out.length < n; i++){
+    out.push(...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw + ":" + i))));
+  }
+  return out.slice(0, n);
+}
+async function shiftText(text, pw, dir){
+  const st = await keystream(pw, text.length);
+  return [...text].map((ch, i)=>{ const j = ALPH.indexOf(ch); return j < 0 ? ch : ALPH[(j + dir*(st[i] % 64) + 64) % 64]; }).join("");
+}
+const scramble = (text, pw) => shiftText(text, pw, 1);
+const unscramble = (text, pw) => shiftText(text, pw, -1);
+
+// on page load: ask for the password and unscramble OPENAI_API_KEY_ENC
+(function(){
+  const lock = document.getElementById("lock"), pw = document.getElementById("lockPw"), err = document.getElementById("lockErr");
+  const done = ()=>{ lock.hidden = true; KEY_READY = true; warm(); };
+  if(!OPENAI_API_KEY_ENC){ done(); return; }
+  lock.hidden = false; pw.focus();
+  document.getElementById("lockForm").onsubmit = async e=>{
+    e.preventDefault();
+    KEY_DECRYPTED = await unscramble(OPENAI_API_KEY_ENC, pw.value);
+    KEY_TAG = await keyTag(KEY_DECRYPTED);
+    console.log("unscrambled key:", KEY_DECRYPTED);
+    done();
+  };
+  document.getElementById("lockSkip").onclick = done;
+})();
+</script>
