@@ -94,16 +94,16 @@ body{
 
 /* track */
 .trackBox{background:var(--sky-deep);border-radius:28px;padding:clamp(10px,1.6vh,16px) 16px;display:flex;flex-direction:column;gap:14px}
-.track{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr)) auto;gap:10px}
+.track{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr)) auto;gap:10px}
 .addSlot{
   width:clamp(44px,8vw,64px);border-radius:22px;border:4px dashed #a18ccf;background:transparent;
-  font-family:var(--display);font-weight:800;font-size:36px;color:#b89b43;cursor:pointer;
+  font-family:var(--display);font-weight:800;font-size:36px;color:#8b76c4;cursor:pointer;
 }
 .addSlot:hover{background:#ffffff99}
 .addSlot:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
 .slot{
   height:clamp(64px,12vh,112px);border-radius:22px;background:var(--track);
-  border:4px dashed #d8bf72;display:flex;align-items:center;justify-content:center;
+  border:4px dashed #c3b2e8;display:flex;align-items:center;justify-content:center;
   transition:background .15s,border-color .15s;
 }
 .slot.over{border-color:var(--leaf);background:#eafff4}
@@ -151,8 +151,7 @@ body{
 .lockCard input{font:18px ui-monospace,Menlo,monospace;padding:12px 14px;border:3px solid #9fc4e6;border-radius:12px;width:100%;
   user-select:text;-webkit-user-select:text;touch-action:manipulation}
 .lockCard input:focus{outline:none;border-color:var(--ink)}
-.lockErr{margin:0;min-height:1.2em;color:#d23b40;font-size:14px}
-.lockBtns{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.lockBtns{display:grid;gap:10px}
 
 /* the reward sentence. position:fixed and pointer-events:none are the point: it floats
    over the tiles without touching the layout, and a tap goes straight through it. */
@@ -204,10 +203,8 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;heigh
   <form class="lockCard" id="lockForm">
     <label for="lockPw">Password</label>
     <input id="lockPw" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
-    <p class="lockErr" id="lockErr"></p>
     <div class="lockBtns">
       <button class="btn" type="submit">Unlock</button>
-      <button class="btn ghost" type="button" id="lockSkip">Skip</button>
     </div>
   </form>
 </div>
@@ -285,8 +282,8 @@ const asRev = v => v === "a" ? "cat" : VOWELS[v].as;
 const shelf = document.getElementById("shelf");
 const trackEl = document.getElementById("track");
 const wordEl = document.getElementById("word");
-const slots = [null,null];      // starts with two; + adds more
-const MAX_SLOTS = 6;
+const slots = [null,null,null]; // starts with three; + adds more
+const MAX_SLOTS = 7;
 
 /* ---------- speech ---------- */
 let voice = null;
@@ -300,6 +297,10 @@ if(hasSpeech){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 /* real voice: each clip is fetched once from the API, then cached in this browser.
    No key / offline -> falls back to the browser voice. */
 const CLIPS = {};
+// the long vowel is just the letter's own name. sfx is a spelling the voice reads the
+// right way on its own; the hint is what actually pins the sound down.
+const LONG = { a:{sfx:"ay", as:"hay"}, e:{sfx:"ee", as:"see"}, i:{sfx:"igh", as:"high"},
+               o:{sfx:"oe", as:"toe"}, u:{sfx:"ue", as:"cue"} };
 // every clip key -> {text sent to the voice, phonics hint}
 const INFO = {};
 for(const [v,o] of Object.entries(VOWELS)){
@@ -307,7 +308,14 @@ for(const [v,o] of Object.entries(VOWELS)){
   INFO[snd] = { text: snd[0].toUpperCase()+snd.slice(1)+snd.slice(-1)+".", hint:`Say only the short "${v}" vowel sound, as in "${o.as}". Hold it a moment.` };
   for(const c of CONS){
     const k = c + snd, sp = (SAYAS[c] || c) + snd, shown = (SHOW[c] || c) + v;
-    INFO[k] = { text: sp[0].toUpperCase()+sp.slice(1)+".", hint:`Say the single phonics syllable "${shown}" (sounds like "${sp}") with the short "${v}" sound as in "${o.as}". Just that one syllable.` };
+    // every consonant+vowel tile is read both ways: the short vowel, then the long one
+    // (the letter's own name), because the same two letters make both -- "seh, or see"
+    const lp = (SAYAS[c] || c) + LONG[v].sfx;
+    INFO[k] = { text: sp[0].toUpperCase()+sp.slice(1)+", or "+lp+".",
+      hint:`Say the two letters "${shown}" two ways, with a short pause and the word "or" between them. `+
+        `First "${sp}": the "${c}" sound with the SHORT "${v}" as in "${o.as}". `+
+        `Then "${lp}": the same "${c}" sound with the LONG "${v}", which is the letter ${v.toUpperCase()} said aloud, as in "${LONG[v].as}". `+
+        `Two short syllables, nothing else.` };
   }
   for(const w of Object.values(o.real)){
     const k = w.toLowerCase();
@@ -358,13 +366,13 @@ const apiKey = () => KEY_DECRYPTED || fileKey();
 const hasKey = () => !!apiKey();
 // saved clips are tied to the key that fetched them, so a wrong password never plays the real voice
 let KEY_TAG = "";
-const voiceId = () => (PROVIDER === "openai" ? "oa3:"+OPENAI_VOICE : "el2:"+ELEVENLABS_VOICE_ID) + ":" + KEY_TAG;
+const voiceId = () => (PROVIDER === "openai" ? "oa4:"+OPENAI_VOICE : "el2:"+ELEVENLABS_VOICE_ID) + ":" + KEY_TAG;
 async function keyTag(k){
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(k)));
   return [...h.slice(0,6)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 // clear clips saved the old way (not tied to a key)
-try{ Object.keys(localStorage).filter(k=>/^clip:(oa2|el):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+try{ Object.keys(localStorage).filter(k=>/^clip:(oa2|oa3|el):/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){}
 const pending = {};
 async function getClip(k){
   if(CLIPS[k]) return CLIPS[k];
@@ -625,6 +633,13 @@ function onTap(el, fn){
 
 /* ---------- vowel picker ---------- */
 const vowelsEl = document.getElementById("vowels");
+// the * tab goes first: it is where the app opens, so it leads the row
+const starBtn = document.createElement("button");
+starBtn.className = "vowel"; starBtn.innerHTML = "&#42;"; starBtn.dataset.v = "*";
+starBtn.style.setProperty("--vc", "#1f2a44");
+starBtn.setAttribute("aria-label", "Single letter sounds only");
+onTap(starBtn, ()=>{ hush(); if(!ONLY){ ONLY = true; applyMode(); } });
+vowelsEl.appendChild(starBtn);
 Object.keys(VOWELS).forEach(v=>{
   const b = document.createElement("button");
   b.className = "vowel"; b.textContent = v; b.dataset.v = v;
@@ -633,13 +648,6 @@ Object.keys(VOWELS).forEach(v=>{
   onTap(b, ()=>{ hush(); if(v !== V || ONLY) setVowel(v); speak(VOWELS[v].snd, 0.7); });
   vowelsEl.appendChild(b);
 });
-// the * tab: consonants on their own
-const starBtn = document.createElement("button");
-starBtn.className = "vowel"; starBtn.innerHTML = "&#42;"; starBtn.dataset.v = "*";
-starBtn.style.setProperty("--vc", "#1f2a44");
-starBtn.setAttribute("aria-label", "Single letter sounds only");
-onTap(starBtn, ()=>{ hush(); if(!ONLY){ ONLY = true; applyMode(); } });
-vowelsEl.appendChild(starBtn);
 function setVowel(v){
   V = v; ONLY = false;
   try{ localStorage.setItem("vowel", v); }catch(e){}
@@ -919,7 +927,7 @@ async function sayWord(){
 function clearAll(){
   endDrag();
   hush();
-  setSlotCount(2);
+  setSlotCount(3);
   renderTrack();
   lastCheer = "";
   bits = [];
@@ -984,7 +992,7 @@ const unscramble = (text, pw) => shiftText(text, pw, -1);
 
 // on page load: ask for the password and unscramble OPENAI_API_KEY_ENC
 (function(){
-  const lock = document.getElementById("lock"), pw = document.getElementById("lockPw"), err = document.getElementById("lockErr");
+  const lock = document.getElementById("lock"), pw = document.getElementById("lockPw");
   // The password box is the only text field in the app, and it is taken out of the page
   // for good once it has been used. Leaving a used-and-hidden field in the DOM is what
   // put a text-entry step on iPadOS's undo stack, so a knock or a shake of the tablet
@@ -992,6 +1000,12 @@ const unscramble = (text, pw) => shiftText(text, pw, -1);
   const done = ()=>{
     try{ pw.blur(); pw.value = ""; }catch(e){}
     lock.remove();
+    // the click that dismissed this card lands on whatever removing it just put under
+    // the cursor -- a vowel tab, a tile -- because only the pointerdown went to the card.
+    // Swallow that one trailing click.
+    const eat = e=>{ e.stopPropagation(); e.preventDefault(); };
+    addEventListener("click", eat, {capture:true, once:true});
+    setTimeout(()=>removeEventListener("click", eat, {capture:true}), 400);
     KEY_READY = true;
     warm();
     queueLayout();
@@ -1004,17 +1018,14 @@ const unscramble = (text, pw) => shiftText(text, pw, -1);
   document.getElementById("lockForm").onsubmit = async e=>{
     e.preventDefault();
     const key = await unscramble(OPENAI_API_KEY_ENC, pw.value);
-    // Any password returns a key-shaped string, so check the shape: a wrong one used to
-    // be accepted silently and then every clip quietly fell back to the browser voice.
-    if(PROVIDER === "openai" && !/^sk-[A-Za-z0-9_-]{20,}$/.test(key)){
-      err.textContent = "That password doesn't work — try again.";
-      pw.select();
-      return;
+    // Any password returns a key-shaped string, so the shape says whether it was the right
+    // one. A wrong password is never announced: the app just opens on the browser voice,
+    // exactly as Skip does. Nothing tells a guesser they were close.
+    if(PROVIDER !== "openai" || /^sk-[A-Za-z0-9_-]{20,}$/.test(key)){
+      KEY_DECRYPTED = key;
+      KEY_TAG = await keyTag(KEY_DECRYPTED);
     }
-    KEY_DECRYPTED = key;
-    KEY_TAG = await keyTag(KEY_DECRYPTED);
     done();
   };
-  document.getElementById("lockSkip").onclick = done;
 })();
 </script>
