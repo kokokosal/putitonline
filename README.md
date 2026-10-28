@@ -11,3 +11,4 @@ Zip upload → GitHub Pages hosting pipeline.
 - [wild-hedgehog-984](https://kokokosal.github.io/putitonline/wild-hedgehog-984/)
 - [vivid-alpaca-234](https://kokokosal.github.io/putitonline/vivid-alpaca-234/)
 - [vivid-panda-83](https://kokokosal.github.io/putitonline/vivid-panda-83/)
+- [cr](https://kokokosal.github.io/putitonline/cr/)
