@@ -15,10 +15,10 @@
 /* Layout: a toy table \2014  syllable shelf on top, a chunky word track below. Single bright theme by choice. */
 :root{
   color-scheme: light;
-  --sky:#eee6fd;        /* light violet page */
-  --sky-deep:#ddd0fa;   /* the deeper violet the track sits on */
+  --sky:#d4ee9c;        /* lime page */
+  --sky-deep:#bcdf6e;   /* the deeper lime the track sits on */
   --ink:#1f2a44;
-  --ink-soft:#6b5f94;
+  --ink-soft:#4c6628;
   --a:#ff5a5f;          /* the vowel color; changes with the picker */
   --track:#ffffff;
   --sun:#ffcf3f;
@@ -35,8 +35,8 @@ body{
   height:100dvh;touch-action:none;
   display:flex;flex-direction:column;margin:0;
   background:var(--sky);
-  background-image:radial-gradient(circle at 12% 8%, #faf7fecc 0 60px, transparent 61px),
-                   radial-gradient(circle at 88% 14%, #faf7fecc 0 40px, transparent 41px);
+  background-image:radial-gradient(circle at 12% 8%, #e7f7bfcc 0 60px, transparent 61px),
+                   radial-gradient(circle at 88% 14%, #e7f7bfcc 0 40px, transparent 41px);
   color:var(--ink);
   font-family:var(--letters);
   padding-left:max(16px, env(safe-area-inset-left, 0px));
@@ -94,23 +94,17 @@ body{
 
 /* track */
 .trackBox{background:var(--sky-deep);border-radius:28px;padding:clamp(10px,1.6vh,16px) 16px;display:flex;flex-direction:column;gap:14px}
-.track{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr)) auto;gap:10px}
-.addSlot{
-  width:clamp(44px,8vw,64px);border-radius:22px;border:4px dashed #a18ccf;background:transparent;
-  font-family:var(--display);font-weight:800;font-size:36px;color:#8b76c4;cursor:pointer;
-}
-.addSlot:hover{background:#ffffff99}
-.addSlot:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.track{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:10px}
 .slot{
   height:clamp(64px,12vh,112px);border-radius:22px;background:var(--track);
-  border:4px dashed #c3b2e8;display:flex;align-items:center;justify-content:center;
+  border:4px dashed #a6cc62;display:flex;align-items:center;justify-content:center;
   transition:background .15s,border-color .15s;
 }
 .slot.over{border-color:var(--leaf);background:#eafff4}
 .slot.filled{border-style:solid;border-color:transparent;background:transparent}
 .slot .tile{width:100%;height:100%;font-size:clamp(30px,6vw,48px)}
 .slot .tile.hot{transform:translateY(-12px) scale(1.06)}
-.controls{display:grid;grid-template-columns:1fr minmax(64px,.25fr);gap:10px;align-items:stretch}
+.controls{display:grid;grid-template-columns:minmax(56px,.14fr) 1fr;gap:10px;align-items:stretch}
 #play.busy{animation:busy .8s ease-in-out infinite alternate}
 @keyframes busy{to{filter:brightness(1.12);transform:scale(.98)}}
 .btn.clear{background:#ff5a5f;color:#fff;box-shadow:0 5px 0 #c7393e;padding:0}
@@ -165,6 +159,9 @@ body{
   opacity:0;transition:opacity .22s ease-out, transform .22s ease-out;
 }
 .funny.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* a spelling correction: the same card, ringed in the teaching blue rather than the
+   warm page color, so a fix never looks quite like a cheer */
+.funny.fix{box-shadow:0 10px 0 #2c303926, 0 0 0 4px #8fc4ea}
 @media (prefers-reduced-motion: reduce){ .funny{transition:none} }
 
 /* drag ghost + confetti */
@@ -192,8 +189,8 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;heigh
     <div class="word" id="word" aria-live="polite"></div>
     <div class="track" id="track"></div>
     <div class="controls">
-      <button class="btn" id="play">&#9654; Say it</button>
       <button class="btn clear" id="clear" aria-label="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="btn" id="play">&#9654; Say it</button>
     </div>
   </section>
 </div>
@@ -218,6 +215,40 @@ const OPENAI_API_KEY_ENC = "u6fKCs86rNF7S_NhqzBq-joalmsRdOmRKRKjtvw-hKaxedTYSxq_
 const OPENAI_VOICE = "ash";             // coral, nova, shimmer, sage, alloy...
 const FUNNY_MODEL = "gpt-4o-mini";      // writes the reward sentence; same OpenAI key as the voice
 const FUNNY_NAMES = ["Colin", "Emma", "Scarlett"];   // who the silly sentences star
+// how wild the sentences get. 2 is the ceiling, but past ~1.6 the model starts mangling
+// its own JSON and the reward silently goes missing, so a spoiled reply is retried once
+// at a calm temperature rather than lost.
+const FUNNY_TEMP = 1.5;
+/* Springboards for the silly sentences. A few are drawn at random HERE, in the page,
+   and offered to the model -- asking a model to "pick something random" gets the same
+   handful of ideas every time, but a random draw really is random. They are suggestions
+   only: the model is told it may ignore them when the word itself is funnier.
+   Add your own freely; nothing depends on the length of these lists. */
+const FUNNY_SEEDS = {
+  where: ["in the bath", "at the dentist", "on a school bus", "inside a volcano", "at yey's house",
+    "in a submarine", "on the moon", "behind the sofa", "in a supermarket", "at a wedding",
+    "in a treehouse", "at the bottom of a swimming pool", "in a lift that is stuck", "on a rollercoaster",
+    "in the back garden", "at the library", "inside a giant shoe", "on a pirate ship", "in a snowstorm",
+    "at the zoo", "in a tent", "on a very long train", "in a bouncy castle", "at the dump"],
+  what: ["a grumpy goose", "forty-one socks", "a bowl of cold spaghetti", "a robot vacuum", "a trumpet",
+    "a slug named Kevin", "a bucket of jelly", "an enormous sandwich", "a squeaky wheelbarrow",
+    "a pair of underpants", "a tiny horse", "a melted ice cream", "a talking potato", "a rubber duck",
+    "a fire engine", "a wig", "a wheel of cheese", "a hamster wearing a hat", "a bag of marbles",
+    "a trampoline", "a kazoo", "a wobbly tooth", "a seagull with opinions", "a bin lorry"],
+  twist: ["and nobody noticed for three days", "but it was upside down the whole time",
+    "until the smell reached the neighbours", "and then it exploded on the piano",
+    "while everyone asked wheres papa", "and it has happened every Tuesday since",
+    "but only on a full moon", "and the goldfish ate it", "so now it is a family rule",
+    "and that is why everything is a house", "which made Chibi poop", "and then it rained custard",
+    "so they all had clean Milo and Xander", "and the guinea pigs still talk about it"]
+};
+// A twist is a strong, memorable ending, so offering one every time makes every sentence
+// end the same shape. It is dealt in only this often; the rest of the time the model is
+// never shown one and finishes the sentence however it likes. 0 switches them off.
+const FUNNY_TWIST_CHANCE = 0.15;
+// the shape of the joke, drawn fresh each time, so they don't all land the same way
+const FUNNY_SHAPES = ["a tiny one-sentence story", "a ridiculous question", "an over-the-top exclamation",
+  "a deadpan statement of something obviously untrue", "a dramatic announcement", "a silly piece of advice"];
 /* ====================================================== */
 
 const CONS = "b c d f g h j k l m n p r s t v w y z".split(" ");
@@ -486,10 +517,12 @@ function wordKey(items){
 
 /* ---------- the funny-sentence reward ----------
    Build a real word and the model writes one silly sentence about it, starring the kids;
-   the voice then reads it. The whole thing is best-effort: no key, a key that isn't
-   allowed to call the text model, or a network wobble all just mean no sentence, and
-   the app behaves exactly as it did before. */
-const FUNNY = {};                      // word -> {real, sentence}
+   the voice then reads it. Build something that only sounds like a word -- kat, fone --
+   and it gives the right spelling first, then the silly sentence. Nonsense gets nothing.
+   The whole thing is best-effort: no key, a key that isn't allowed to call the text
+   model, or a network wobble all just mean no sentence, and the app behaves exactly as
+   it did before. */
+const FUNNY = {};                      // word -> {real, fix, sentence}
 const funnyPending = {};
 const funnyKey = w => "s:" + w;
 const canFunny = () => PROVIDER === "openai" && hasKey();
@@ -497,36 +530,73 @@ const canFunny = () => PROVIDER === "openai" && hasKey();
 // misses most of what the * tab can build (c-a-t is not in it), so the star and the
 // confetti follow the model's verdict too, once it arrives.
 const isReal = w => !!ALLREAL[w] || !!(FUNNY[w] && FUNNY[w].real);
-async function askFunny(word){
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+async function askFunny(word, temp = FUNNY_TEMP){
   const names = FUNNY_NAMES.join(", ");
+  // a fresh draw per call. The model is told these are optional, so a word with an
+  // obvious joke in it still wins -- they are there to break ties, not to dictate.
+  const seeds = [pickOne(FUNNY_SEEDS.where), pickOne(FUNNY_SEEDS.what)];
+  if(Math.random() < FUNNY_TWIST_CHANCE) seeds.push(pickOne(FUNNY_SEEDS.twist));
+  const shape = pickOne(FUNNY_SHAPES);
+  const who = pickOne(FUNNY_NAMES);
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+apiKey() },
-    body: JSON.stringify({ model:FUNNY_MODEL, temperature:1, max_tokens:120,
+    body: JSON.stringify({ model:FUNNY_MODEL, temperature:temp, max_tokens:160,
       response_format:{ type:"json_object" },
       messages:[
         { role:"system", content:
-          `A young child is learning to read by dragging letter tiles together. Reply with JSON only: {"real":boolean,"sentence":string}. `+
-          `Set "real" true only if the letters spell an ordinary English word a five-year-old would know (a common name counts); otherwise "real" is false and "sentence" is "". `+
-          `When it is a real word, "sentence" is ONE very funny sentence for kids about a silly situation or random idea that includes that word, `+
-          `using the names ${names} (one of them, or a combination). Under 20 words, cheerful and gentle: nothing scary, mean, rude or dangerous.` },
+          `A young child is learning to read by dragging letter tiles together. They have just built "${word}". `+
+          `Reply with JSON only: {"kind":"word"|"fix"|"none","sentence":string}.\n`+
+          `"word" -- the letters spell an ordinary English word a five-year-old would know (a common name counts). `+
+          `"sentence" is ONE ridiculous sentence for kids that uses that word, potty humour welcome, starring ${names} (one of them, or a combination).\n`+
+          `"fix" -- not a real word, but it sounds like one the child was reaching for (kat/cat, fone/phone). `+
+          `"sentence" starts by spelling the right word out letter by letter, as capitals joined by hyphens, `+
+          `exactly like this: "${word} is actually spelled C-A-T." (that is the format, not the answer -- spell the word you actually mean). `+
+          `Then one ridiculous sentence using the real word normally, starring ${names}.\n`+
+          `"none" -- not a word and not close to one. "sentence" is "".\n`+
+          `Make this one ${shape}, and lead with ${who} if that works.\n`+
+          `Random springboards you MAY use -- any of them, or none: ${seeds.map(x=>`"${x}"`).join(", ")}. `+
+          `Ignore them completely whenever the word itself suggests something funnier; a forced-in prop is worse than none. `+
+          `Do not list them. Never mention that you were given any suggestions.\n`+
+          `Keep "sentence" under 25 words. Never scary or mean.` },
         { role:"user", content: word }
       ] })
   });
   if(!r.ok) throw new Error(r.status + " " + (await r.text()).slice(0,200));
-  const j = JSON.parse((await r.json()).choices[0].message.content);
+  const raw = (await r.json()).choices[0].message.content;
+  let j;
+  // a hot model sometimes trails off mid-JSON. One calm retry beats a missing reward.
+  try{ j = JSON.parse(raw); }
+  catch(e){
+    if(temp <= 1) throw e;
+    console.warn("funny JSON was mangled at temperature", temp, "- retrying calmer");
+    return askFunny(word, 1);
+  }
   const sentence = String(j.sentence || "").trim();
-  return { real: !!j.real && !!sentence, sentence };
+  // real: a true word, so it earns the star and the confetti. fix: a near miss, so the
+  // voice offers the right spelling instead -- a sentence either way, a cheer only for real.
+  return { real: j.kind === "word" && !!sentence, fix: j.kind === "fix" && !!sentence, sentence };
 }
 // called the moment a word lands in the track: the sentence and its voice clip load while
 // the child is still reaching for "Say it", so the reward plays with no gap after the word
 function prepFunny(word){
-  if(!canFunny() || word.length < 2 || FUNNY[word] || funnyPending[word]) return;
+  if(!canFunny() || word.length < 2 || funnyPending[word]) return;
+  const had = FUNNY[word];
+  if(had && !had.used) return;        // an unheard sentence is already waiting
+  if(had){                            // heard it already: re-roll, and drop the stale audio
+    READY.delete(funnyKey(word));
+    delete CLIPS[funnyKey(word)];
+  }
   funnyPending[word] = askFunny(word).then(res=>{
     FUNNY[word] = res;
     if(plainWord() === word) renderWord();       // the star can light up now
-    if(res.real){
+    if(res.real || res.fix){
       INFO[funnyKey(word)] = { text: res.sentence, nosave: true,
-        instr: "A playful grown-up telling a young child something funny. Warm, lively and a little silly, at a normal speaking pace." };
+        instr: res.fix
+          ? "A warm grown-up gently putting a young child right about a spelling, then being silly about it. Kind and encouraging, never scolding. "+
+            "IMPORTANT: where capital letters are joined by hyphens, read out each LETTER NAME separately and clearly, with a small beat between them -- "+
+            "\"C-A-T\" is said \"see. ay. tee.\", never as the word. Everything else at a normal speaking pace."
+          : "A playful grown-up telling a young child something funny. Warm, lively and a little silly, at a normal speaking pace." };
       return prepare(funnyKey(word));            // decoded ahead of time, like every other clip
     }
   }).catch(err=>{ console.warn("funny sentence failed", word, err); })
@@ -538,13 +608,14 @@ async function funnyFor(word){
   prepFunny(word);
   if(funnyPending[word]) await funnyPending[word];
   const f = FUNNY[word];
-  return f && f.real ? f.sentence : null;
+  return f && (f.real || f.fix) ? f.sentence : null;
 }
 const funnyEl = document.getElementById("funny");
 let funnyTimer = 0;
-function showFunny(text){
+function showFunny(text, isFix){
   clearTimeout(funnyTimer);
   funnyEl.textContent = text;
+  funnyEl.classList.toggle("fix", !!isFix);    // a correction reads calmer than a cheer
   funnyEl.hidden = false;
   requestAnimationFrame(()=>funnyEl.classList.add("on"));
 }
@@ -560,7 +631,8 @@ async function playFunny(word, my){
   if(!canFunny()) return;
   const sentence = await funnyFor(word);
   if(!sentence || my !== gen) return;
-  showFunny(sentence);
+  showFunny(sentence, FUNNY[word] && FUNNY[word].fix);
+  if(FUNNY[word]) FUNNY[word].used = true;   // next time this word is built, a new joke
   await playKey(funnyKey(word), sentence, 0.95);
   if(my === gen) funnyTimer = setTimeout(hideFunny, 1500);   // let it linger a beat
 }
@@ -695,9 +767,10 @@ function makeTile(c, i, v=V, rev=false){
 }
 const colorIndex = c => CONS.indexOf(c);
 
-// vowels first so the * tab opens with a e i o u on the top row; they're hidden otherwise
-[...VLETTERS, ...CONS].forEach((c,i)=>{
-  const t = makeTile(c, i - VLETTERS.length, VOWELS[c] ? null : V);
+// consonants first, so on the * tab the five vowels fall on the LAST row of the pile --
+// the row nearest the track, within easy reach of the slots. Hidden on the other tabs.
+[...CONS, ...VLETTERS].forEach((c,i)=>{
+  const t = makeTile(c, i, VOWELS[c] ? null : V);
   if(VOWELS[c]) t.hidden = !ONLY;
   t.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); addToNext(shelfItem(c)); } });
   attachDrag(t, ()=>shelfItem(c), null);
@@ -754,21 +827,25 @@ new ResizeObserver(queueLayout).observe(shelf);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(queueLayout);
 if(window.visualViewport) visualViewport.addEventListener("resize", queueLayout);
 
-const addBtn = document.createElement("button");
-addBtn.className = "addSlot"; addBtn.textContent = "+"; addBtn.setAttribute("aria-label", "Add a slot");
-onTap(addBtn, ()=>{ if(slots.length < MAX_SLOTS){ slots.push(null); renderTrack(); } });
 const slotEls = () => [...trackEl.querySelectorAll(".slot")];
+function newSlot(i){
+  const s = document.createElement("div");
+  s.className = "slot"; s.dataset.i = i;
+  return s;
+}
 function buildSlots(){
   slotEls().forEach(s=>s.remove());
-  slots.forEach((_,i)=>{
-    const s = document.createElement("div");
-    s.className = "slot"; s.dataset.i = i;
-    trackEl.insertBefore(s, addBtn);
-  });
+  slots.forEach((_,i)=>trackEl.appendChild(newSlot(i)));
   trackEl.style.setProperty("--n", slots.length);
-  addBtn.hidden = slots.length >= MAX_SLOTS;
 }
-trackEl.appendChild(addBtn);
+// The track makes its own room: there is always one empty slot waiting at the end, so
+// the next tile has somewhere obvious to go and nobody has to ask for it. Growing only
+// once a drag starts was too late to be seen -- the row looked full and finished.
+function growTrack(){
+  if(slots.length >= MAX_SLOTS || slots.some(s=>!s)) return false;
+  slots.push(null);
+  return true;
+}
 function setSlotCount(n){ slots.length = 0; for(let i=0;i<n;i++) slots.push(null); }
 
 const plainWord = () => current().map(label).join("");
@@ -778,6 +855,7 @@ function renderWord(){
   wordEl.classList.toggle("real", isReal(plainWord()));
 }
 function renderTrack(){
+  growTrack();                        // keep a spare slot open at the end, always
   if(KEY_READY && hasKey()){
     prepare(wordKey(current()));        // load the word now so Say it is instant
     prepFunny(plainWord());             // and the reward sentence behind it
@@ -798,7 +876,8 @@ function renderTrack(){
 
 function current(){ return slots.filter(Boolean); }
 function addToNext(it){
-  const i = slots.indexOf(null);
+  let i = slots.indexOf(null);
+  if(i < 0 && growTrack()) i = slots.length - 1;   // tapping grows the row too
   if(i<0){ hush(); speak(itemKey(it)); return; }
   slots[i] = it; renderTrack(); bounceSlot(i);
   hush(); speak(itemKey(it)).then(maybeCelebrate);
